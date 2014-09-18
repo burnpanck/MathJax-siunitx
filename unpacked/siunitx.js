@@ -125,7 +125,7 @@ MathJax.Hub.Register.StartupHook("TeX Jax Ready", function () {
       if(this._options[prop] === undefined)
         throw ValidationError(this,name,undefined,values[prop],"does not exist");
       this[prop] = value;
-    }
+    },
     SetMany: function(values){
       for(var prop in values)
         this.Set(prop,values[prop]);
@@ -628,4 +628,4 @@ MathJax.Hub.Register.StartupHook("TeX Jax Ready", function () {
 
 });
 
-MathJax.Ajax.loadComplete("[MathJax]/extensions/TeX/siunitx.js");
+MathJax.Ajax.loadComplete("[Contrib]/siunitx/siunitx.js");

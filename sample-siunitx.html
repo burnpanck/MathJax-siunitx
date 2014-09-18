@@ -9,10 +9,11 @@
 <script type="text/x-mathjax-config">
   MathJax.Hub.Config({
     tex2jax: {inlineMath: [["$","$"],["\\(","\\)"]]},
-    TeX: { extensions: ["siunitx.js"] }
+    TeX: { extensions: ["[Contrib]/siunitx/unpacked/siunitx.js"] }
   });
+  MathJax.Ajax.config.path.Contrib  = '.';
 </script>
-<script type="text/javascript" src="../unpacked/MathJax.js?config=TeX-AMS_HTML-full"></script>
+<script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML-full"></script>
 
 <style type="text/css">
 table.unit-listing pre {
