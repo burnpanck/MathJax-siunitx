@@ -88,7 +88,10 @@ MathJax.Hub.Register.StartupHook("TeX Jax Ready", function () {
     }
   });
   var Integer = ValidationBase.Subclass({
-    Init: function(def){this._default = def;},
+    Init: function(def){
+      if(def === undefined) def = 0;
+      this._default = def;
+    },
     Validate: function(val,name,obj){
       if(!Number.isInteger(val))
         throw ValidationError(obj,name,this,val,"must be an integer");
@@ -99,6 +102,20 @@ MathJax.Hub.Register.StartupHook("TeX Jax Ready", function () {
     Init: function(def){this._default = def;},
     Validate: function(val,name,obj){
       return val;
+    }
+  });
+  var Math = Literal.Subclass({
+  });
+  var Length = ValidationBase.Subclass({
+    Init: function(def){this._default = def;},
+    Validate: function(val,name,obj){
+      return val; // TODO: proper validation
+    }
+  });
+  var Macro = ValidationBase.Subclass({
+    Init: function(def){this._default = def;},
+    Validate: function(val,name,obj){
+      return val; // TODO: proper validation
     }
   });
   var Switch = ValidationBase.Subclass({
@@ -155,9 +172,157 @@ MathJax.Hub.Register.StartupHook("TeX Jax Ready", function () {
   });
   
   var SIunitxOptions = ConfigData.Define({
+    // Font detection
+//    'detect-all': Meta({'detect-weight':true,'detect-family':true,'detect-shape':true,'detect-mode':true}),
+    'detect-display-math': Switch(),
     'detect-family': Switch(),
     'detect-inline-family': Choice('text','math'),
     'detect-inline-weight': Choice('text','math'),
+    'detect-mode': Switch(),
+//    'detect-none': Meta({'detect-weight':false,'detect-family':false,'detect-shape':false,'detect-mode':false}),
+    'detect-shape': Switch(),
+    'detect-weight': Switch(),
+      
+    // Font options
+    'color': Literal(''),
+    'math-rm': Macro('\\mathrm'),
+    'math-sf': Macro('\\mathsf'),
+    'math-tt': Macro('\\mathtt'),
+    'mode': Choice('math','text'),
+    'text-rm': Macro('\\rmfamily'),
+    'text-sf': Macro('\\sffamily'),
+    'text-tt': Macro('\\ttfamily'),
+    
+    // Number parsing
+    'input-close-uncertainty': Literal(')'),
+    'input-comparators': Literal('<=>\\approx\\ge\\geq\\gg\\le\\leq\\ll\\sim'),
+    'input-complex-roots': Literal('ij'),
+    'input-decimal-markers': Literal(',.'),
+    'input-digits': Literal('0123456789'),
+    'input-exponent-markers': Literal('dDeE'),
+    'input-ignore': Literal(''),
+    'input-open-uncertainty': Literal('('),
+    'input-protect-tokens': Literal('\\approx\\dots\\ge\\geq\\gg\\le\\leq\\ll\\mp\\pi\\pm\\sim'),
+    'input-signs': Literal('+-\\pm\\mp'),
+    'input-uncertainty-signs': Literal('\\pm'),
+    'input-symbols': Literal('\\pi\\dots'),
+    'parse-numbers': Switch(true),
+      
+    // Number post-processing options
+    'add-decimal-zero': Switch(true),
+    'add-integer-zero': Switch(true),
+    'explicit-sign': Literal(''),
+    'fixed-exponent': Integer(),
+    'minimum-integer-digits': Integer(),
+    'omit-uncertainty': Switch(),
+    'retain-explicit-plus': Switch(),
+    'retain-unit-mantissa': Switch(true),
+    'retain-zero-exponent': Switch(),
+    'round-half': Choice('up','even'),
+    'round-integer-to-decimal': Switch(),
+    'round-minimum': Literal('0'),  // Should be a Real! (does not exist in LaTeX's siunitx)
+    'round-mode': Choice('off','figures','places'),
+    'round-precision': Integer(2),
+    'scientific-notation': Switch(),
+    'zero-decimal-to-integer': Switch(),
+      
+    // Number output
+    'bracket-negative-numbers': Switch(),
+    'bracket-numbers': Switch(true),
+    'close-bracket': Literal(')'),
+    'complex-root-position': Choice('after-number','before-number'),
+    'copy-complex-root': Switch(false),
+    'copy-decimal-marker': Switch(false),
+    'exponent-base': Literal('10'),
+    'exponent-product': Math('\times'),
+    'group-digits': Choice(true,false,'decimal','integer'),
+    'group-minimum-digits': Integer(5),
+    'group-separator': Literal('\\,'),
+    'negative-color': Literal(''),
+    'open-bracket': Literal('('),
+    'output-close-uncertainty': Literal(')'),
+    'output-complex-root': Literal('\\ensuremath{\\mathrm{i}}'),
+    'output-decimal-marker': Literal('.'),
+    'output-exponent-marker': Literal(''),
+    'output-open-uncertainty': Literal('('),
+    'separate-uncertainty': Switch(false),
+    'tight-spacing': Switch(false),
+    'uncertainty-separator': Literal(''),
+
+    // Multi-part number options
+    'fraction-function': Macro('\\frac'),
+    'input-product': Literal('x'),
+    'input-quotient': Literal('/'),
+    'output-product': Math('\\times'),
+    'output-quotient': Literal('/'),
+    'quotient-mode': Choice('symbol','fraction'),
+      
+    // lists and ranges of numbers
+    'list-final-separator': Literal(' and '),
+    'list-pair-separator': Literal(' and '),
+    'list-separator': Literal(', '),
+    'range-phrase': Literal(' to '),
+      
+      // angle options
+    'add-arc-degree-zero': Switch(false),
+    'add-arc-minute-zero': Switch(false),
+    'add-arc-second-zero': Switch(false),
+    'angle-symbol-over-decimal': Switch(false),
+    'arc-separator': Literal(false),
+    'number-angle-product': Literal(''),
+     
+      // unit creation
+    'free-standing-units': Switch(false),
+    'overwrite-functions': Switch(false),
+    'space-before-unit': Switch(false),
+    'unit-optional-argument': Switch(false),
+    'use-xspace': Switch(false),
+      
+      // additional units
+      'abbreviations': Switch(true),
+      'binary-units': Switch(),
+      
+      // Unit output options
+    'bracket-unit-denominator': Switch(true),
+    'forbid-literal-units': Switch(false),
+    'literal-superscript-as-power': Switch(true),
+    'inter-unit-product': Literal('\\,'),
+    'parse-units': Switch(true),
+    'per-mode': Choice('reciprocal','fraction'),
+    'per-symbol': Literal('/'),
+    'power-font': Choice('number','unit'),
+    'prefixes-as-symbols': Switch(true),
+    'qualifier-mode': Choice('subscript','brackets','phrases','space','text'),
+    'sticky-per': Switch(false),
+
+    // numbers with units
+    'allow-number-unit-breaks': Switch(false),
+    'exponent-to-prefix': Switch(false),
+    'list-units': Choice('repeat','brackets','single'),
+    'multi-part-units': Choice('brackets','repeat','single'),
+    'number-unit-product': Literal('\\,'),
+    'product-units': Choice('repeat','brackets','brackets-power','power','single'),
+    'range-units': Choice('repeat','brackets','single')
+
+      // Tabular material (unlikely will ever be implemented) => not declared
+      
+      // symbol options
+ /*   'math-angstrom': Literal('\text{\AA}'),
+    'math-arcminute': Literal('{}^{\prime}'),
+    'math-arcsecond': Literal('{}^{\prime\prime}'),
+    'math-celsius': Literal('{}^{\circ})\kern -\scriptspace \mathrm{C}'),
+    'math-degree': Literal('{}^{\circ}'),
+    'math-micro': Literal(''),
+    'math-ohm': Literal('\\Omega'),
+    'redefine-symbols': Switch(true),
+    'text-angstrom': Literal('\\AA'),
+    'text-arcminute': Literal('\ensuremath{{}^{\prime}}'),
+    'text-arcsecond': Literal('\ensuremath{{}^{\prime\prime}}'),
+    'text-celsius': Literal('\ensuremath{{}^{\circ}\kern -\scriptspace \text{C}}'),
+    'text-degree': Literal('\ensuremath{{}^{\circ}}'),
+    'text-micro': Literal(''),
+    'text-ohm': Literal('\ensuremath{\Omega}')
+                                         */
   });
       
   var UNITSMACROS = {
