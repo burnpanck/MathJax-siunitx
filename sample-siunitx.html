@@ -9,11 +9,12 @@
 <script type="text/x-mathjax-config">
   MathJax.Hub.Config({
     tex2jax: {inlineMath: [["$","$"],["\\(","\\)"]]},
-    TeX: { extensions: ["[Contrib]/unpacked/siunitx.js"] }
+//	errorSettings: {message: undefined},
+    TeX: { extensions: ["[Contrib]/siunitx/unpacked/siunitx.js"] }
   });
-  MathJax.Ajax.config.path.Contrib  = '.';
+  MathJax.Ajax.config.path['Contrib']  = '..';
 </script>
-<script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML-full"></script>
+<script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/unpacked/MathJax.js?config=TeX-AMS_HTML"></script>
 
 <style type="text/css">
 table.unit-listing pre {
@@ -33,7 +34,7 @@ table.unit-listing pre {
 
 <h2>Examples</h2>    
 
-Trigger MathJax loading $!$.    
+Trigger MathJax loading $e_h$.    
     
 <script type="text/x-siunitx" id="generic-examples-src">
     3 siunitx for the impatient
@@ -102,7 +103,7 @@ Trigger MathJax loading $!$.
 \si{\per\henry\tothe{5}}    
 \si{\per\square\becquerel}
 
-\si{kilogram\of{metal}}
+\si{\kilogram\of{metal}}
 \SI[qualifier-mode = brackets]{0.1}{\milli\mole\of{cat}\per\kilogram\of{\prod}}
 
 \si[per-mode = fraction]{\cancel\kilogram\metre\per\cancel\kilogram\per\second}
@@ -115,6 +116,19 @@ Trigger MathJax loading $!$.
 
 \si{\kilo\gram\micro}\text{<< this shoulg raise an error}
 \SI{10}{\micro}\text{<< this shoulg raise an error}
+   *** Number stress testing
+\num{+1}
+\num{-1}
+\num{+-1}
+\num{1 + 2}
+\num{1 - 2}
+\num{1 +- 2}
+\num{1 + 2i}
+\num{1i + 2}
+\num{1i +- 2}
+\num{1 +- 2i}
+\num{1 +- 2i +- 2}
+\num{1 +- 2 +- 2i}
 </script>
 <table class="unit-listing" id="generic-examples">
 <thead><tr><th>Code</th><th>MathJax</th></tr></thead>
