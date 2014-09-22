@@ -38,7 +38,7 @@ MathJax.Hub.Register.StartupHook("TeX Jax Ready", function () {
 
   var ValidationError = MathJax.Object.Subclass({
     Init: function(obj,name,validator,val){
-      this._errormsg = 'ValidationError: Error validating '+name+' of '+obj+' (a '+validator+') to '+val+': '
+      this._errormsg = 'ValidationError: Error validating "'+name+'" of "'+obj.constructor+'" (a "'+validator+'") to "'+val+'": '
       for(var idx=4;idx<arguments.length;++idx)
         this._errormsg += arguments[idx].toString();
       console.log(this._errormsg);
@@ -126,6 +126,13 @@ MathJax.Hub.Register.StartupHook("TeX Jax Ready", function () {
     },
     Validate: function(val,name,obj){
       if(val === undefined) val=true;
+      if (typeof val == 'string' || val instanceof String){
+        val = val.toLowerCase();
+        if(val=='true')
+            val = true;
+        else if(val=='false')
+            val = false;
+      }
       if(val !== true && val !== false)
         throw ValidationError(obj,name,this,val,"must be a boolean");
       return val;
@@ -140,7 +147,7 @@ MathJax.Hub.Register.StartupHook("TeX Jax Ready", function () {
     },
     Set: function(prop,value){
       if(this._options[prop] === undefined)
-        throw ValidationError(this,name,undefined,value,"does not exist");
+        throw ValidationError(this,prop,undefined,value,"does not exist");
       this[prop] = value;
     },
     SetMany: function(values){
@@ -155,11 +162,16 @@ MathJax.Hub.Register.StartupHook("TeX Jax Ready", function () {
       }
       return ret;
     },
-    toString: function(){
+    listSettings: function(skip_initial,sep){
+      if(sep===undefined)
+        sep=',\n'
       var ret = []
-      for(var prop in this._options)
+      for(var prop in this._options){
+        if(skip_initial && !this._values.hasOwnProperty(prop))
+          continue;
         ret.push(prop + ' = ' + this[prop]);
-      return ret.join(',\n');
+      }
+      return ret.join(sep);
     }
   },{
     Define: function(definition){
@@ -192,7 +204,26 @@ MathJax.Hub.Register.StartupHook("TeX Jax Ready", function () {
     'text-rm': Macro('\\rmfamily'),
     'text-sf': Macro('\\sffamily'),
     'text-tt': Macro('\\ttfamily'),
-    
+
+    'unit-color': Literal(''),
+    'unit-math-rm': Macro('\\mathrm'),
+    'unit-math-sf': Macro('\\mathsf'),
+    'unit-math-tt': Macro('\\mathtt'),
+    'unit-mode': Choice('math','text'),
+    'unit-text-rm': Macro('\\rmfamily'),
+    'unit-text-sf': Macro('\\sffamily'),
+    'unit-text-tt': Macro('\\ttfamily'),
+
+    'number-color': Literal(''),
+    'number-math-rm': Macro('\\mathrm'),
+    'number-math-sf': Macro('\\mathsf'),
+    'number-math-tt': Macro('\\mathtt'),
+    'number-mode': Choice('math','text'),
+    'number-text-rm': Macro('\\rmfamily'),
+    'number-text-sf': Macro('\\sffamily'),
+    'number-text-tt': Macro('\\ttfamily'),
+      
+      
     // Number parsing
     'input-close-uncertainty': Literal(')'),
     'input-comparators': Literal('<=>\\approx\\ge\\geq\\gg\\le\\leq\\ll\\sim'),
@@ -234,7 +265,7 @@ MathJax.Hub.Register.StartupHook("TeX Jax Ready", function () {
     'copy-complex-root': Switch(false),
     'copy-decimal-marker': Switch(false),
     'exponent-base': Literal('10'),
-    'exponent-product': Math('\times'),
+    'exponent-product': Math('\\times'),
     'group-digits': Choice(true,false,'decimal','integer'),
     'group-minimum-digits': Integer(5),
     'group-separator': Literal('\\,'),
@@ -288,11 +319,11 @@ MathJax.Hub.Register.StartupHook("TeX Jax Ready", function () {
     'literal-superscript-as-power': Switch(true),
     'inter-unit-product': Literal('\\,'),
     'parse-units': Switch(true),
-    'per-mode': Choice('reciprocal','fraction'),
+    'per-mode': Choice('reciprocal','reciprocal-positive-first','symbol','repeated-symbol','fraction','symbol-or-fraction'),
     'per-symbol': Literal('/'),
     'power-font': Choice('number','unit'),
     'prefixes-as-symbols': Switch(true),
-    'qualifier-mode': Choice('subscript','brackets','phrases','space','text'),
+    'qualifier-mode': Choice('subscript','brackets','phrase','space','text'),
     'sticky-per': Switch(false),
 
     // numbers with units
@@ -562,12 +593,13 @@ MathJax.Hub.Register.StartupHook("TeX Jax Ready", function () {
    * This is the TeX parser for unit fields
    */
   var SIUnitParser = TEX.Parse.Subclass({
-    Init: function (string,env) {
+    Init: function (string,options,env) {
       this.cur_prefix = undefined;
       this.cur_pfxpow = undefined;
       this.per_active = false;
 	  this.has_literal = false; // Set to true if non-siunitx LaTeX is encountered in input
 	  this.units = [];
+      this.options = options;
       arguments.callee.SUPER.Init.call(this,string,env);
 /*	  if(this.has_literal){
 		console.log('Unit "',string,'" was parsed literally ',this.units);
@@ -704,8 +736,14 @@ MathJax.Hub.Register.StartupHook("TeX Jax Ready", function () {
       var mml = MML.mi.apply(MML.mi,content).With(def)
       var power = unit.power === undefined ? 1 : unit.power;
       if(unit.inverse) power = -power;
-      if(power != 1)
-          mml = MML.msup(mml,MML.mn(power));
+      if(power != 1){
+          if(unit.qual === undefined)
+            mml = MML.msup(mml,MML.mn(power));
+          else
+            mml = MML.msubsup(mml,MML.mtext(unit.qual),MML.mn(power));
+      } else if(unit.qual !== undefined){
+        mml = MML.msub(mml,MML.mtext(unit.qual));
+      }
       return this.mmlToken(mml);
     },
       
@@ -715,7 +753,8 @@ MathJax.Hub.Register.StartupHook("TeX Jax Ready", function () {
 		unit: unit,
 		prefix: this.cur_prefix,
         power: this.cur_pfxpow,
-        inverse: this.per_active
+        inverse: this.per_active,
+        qual: undefined   // qualification
 	  });
 	
 	  // And process fall-back
@@ -743,7 +782,8 @@ MathJax.Hub.Register.StartupHook("TeX Jax Ready", function () {
         
       this.cur_prefix = undefined;
       this.cur_pfxpow = undefined;
-      this.per_active = false; // TODO: implement sticky per
+      if(!this.options['sticky-per'])
+          this.per_active = false;
     }
   });
   MathJax.Extension["TeX/siunitx"].SIUnitParser = SIUnitParser;
@@ -751,12 +791,67 @@ MathJax.Hub.Register.StartupHook("TeX Jax Ready", function () {
   /*
    * The options parser
    */
-  var OptionsParser = TEX.Parse.Subclass({
-	allkv: function() {
-		return {};
-	}
-  });
+  function _nextBrace(str,start){
+      var open = str.indexOf("{",start);
+      var close = str.indexOf("}",start);
+      if(close >= 0 && (close<open || open==-1))
+          return close;
+      return open;
+  };
+    
+  function ParseOptions(str){
+      var ret = {};
+      str = str.trim();
+      if(!str)
+          return ret;
+      var opts = str.split(',');
+      for(var i=0,l=opts.length;i<l;++i){
+          var parts = opts[i].split('=');
+          var key = parts[0].trim();
+          if(!key)
+              TEX.Error('Empty key in "'+str+'"');
+          if(parts.length<2){
+              ret[key] = undefined;
+              continue;
+          }
+          var val = parts.slice(1).join('=');
+          
+          var count = 0;
+          var pos = -1;
+          while(true){
+              while ( true ) {
+                pos = _nextBrace(val,pos+1);
+                if(pos<0)
+                  break;
+                if(pos>0 && val[pos-1]=='\\'){
+                  continue;
+                }
+                if(val[pos] == '}'){
+                  count--;
+                  if(count<0)
+                    TEX.Error('Too many closing braces in "'+str+'"');
+                } else {
+                  count++;
+                }
+              }          
+              if(!count)
+                break;
+              pos = val.length;
+              i++;
+              if(i>=l)
+                  TEX.Error('Not enough closing braces in "'+str+'"');
+              val += ',' + opts[i];
+          }
+          val = val.trim();
+//          if(val.startsWith('{') && val.endsWith('}'))
+//              val = val.slice(1,-1);
+          ret[key] = val;
+      }
+      return ret;
+  };
   
+  console.log(ParseOptions('a,b=1,c={(1,2)},d=\\{'));
+    
   /*
    *  The number parsers
    */
@@ -828,20 +923,20 @@ MathJax.Hub.Register.StartupHook("TeX Jax Ready", function () {
    */
   var SIunitxCommands = {
     si: function (name) {
-      var options = SIunitxOptions(OptionsParser(this.GetBrackets(name,'')).allkv());
+      var options = SIunitxOptions(ParseOptions(this.GetBrackets(name,'')));
       var units = this.GetArgument(name);
 //      console.log('>> si(',name,'){',units,'}');
-      this.Push(SIUnitParser(units,this.stack.env).mml());
+      this.Push(SIUnitParser(units,options,this.stack.env).mml());
     },
 
     SI: function (name) {
-      var options = SIunitxOptions(OptionsParser(this.GetBrackets(name,'')).allkv());
+      var options = SIunitxOptions(ParseOptions(this.GetBrackets(name,'')));
       var num = this.GetArgument(name);
       var preunits = this.GetBrackets(name,'');
       var units = this.GetArgument(name);
  //     console.log('>> SI(',name,'){',num,'}{',units,'}');
       if(preunits){
-        this.Push(SIUnitParser(preunits,this.stack.env).mml());
+        this.Push(SIUnitParser(preunits,options,this.stack.env).mml());
         this.Push(MML.mspace().With({
           width: MML.LENGTH.MEDIUMMATHSPACE,
           mathsize: MML.SIZE.NORMAL,
@@ -854,16 +949,16 @@ MathJax.Hub.Register.StartupHook("TeX Jax Ready", function () {
         mathsize: MML.SIZE.NORMAL,
         scriptlevel:0
       }));
-      this.Push(SIUnitParser(units,this.stack.env).mml());
+      this.Push(SIUnitParser(units,options,this.stack.env).mml());
     },
 	
     SIlist: function (name) {
-      var options = SIunitxOptions(OptionsParser(this.GetBrackets(name,'')).allkv());
+      var options = SIunitxOptions(ParseOptions(this.GetBrackets(name,'')));
       var num = this.GetArgument(name);
       var preunits = this.GetBrackets(name,'');
       var units = this.GetArgument(name);
       if(preunits){
-        this.Push(SIUnitParser(preunits,this.stack.env).mml());
+        this.Push(SIUnitParser(preunits,options,this.stack.env).mml());
         this.Push(MML.mspace().With({
           width: MML.LENGTH.MEDIUMMATHSPACE,
           mathsize: MML.SIZE.NORMAL,
@@ -876,17 +971,17 @@ MathJax.Hub.Register.StartupHook("TeX Jax Ready", function () {
         mathsize: MML.SIZE.NORMAL,
         scriptlevel:0
       }));
-      this.Push(SIUnitParser(units,this.stack.env).mml());
+      this.Push(SIUnitParser(units,options,this.stack.env).mml());
     },	
 
     SIrange: function (name) {
-      var options = SIunitxOptions(OptionsParser(this.GetBrackets(name,'')).allkv());
+      var options = SIunitxOptions(ParseOptions(this.GetBrackets(name,'')));
       var num1 = this.GetArgument(name);
       var num2 = this.GetArgument(name);
       var preunits = this.GetBrackets(name,'');
       var units = this.GetArgument(name);
       if(preunits){
-        this.Push(SIUnitParser(preunits,this.stack.env).mml());
+        this.Push(SIUnitParser(preunits,options,this.stack.env).mml());
         this.Push(MML.mspace().With({
           width: MML.LENGTH.MEDIUMMATHSPACE,
           mathsize: MML.SIZE.NORMAL,
@@ -900,29 +995,29 @@ MathJax.Hub.Register.StartupHook("TeX Jax Ready", function () {
         mathsize: MML.SIZE.NORMAL,
         scriptlevel:0
       }));
-      this.Push(SIUnitParser(units,this.stack.env).mml());
+      this.Push(SIUnitParser(units,options,this.stack.env).mml());
     },	
 	
 	num: function (name) {
-      var options = SIunitxOptions(OptionsParser(this.GetBrackets(name,'')).allkv());
+      var options = SIunitxOptions(ParseOptions(this.GetBrackets(name,'')));
       var num = this.GetArgument(name);
       this.Push(SINumberParser(num,options,this.stack.env).mml());
     },
 
 	ang: function (name) {
-      var options = SIunitxOptions(OptionsParser(this.GetBrackets(name,'')).allkv());
+      var options = SIunitxOptions(ParseOptions(this.GetBrackets(name,'')));
       var num = this.GetArgument(name);
       this.Push(SINumberParser(num,options,this.stack.env).mml());
     },
 	
 	numlist: function (name) {
-      var options = SIunitxOptions(OptionsParser(this.GetBrackets(name,'')).allkv());
+      var options = SIunitxOptions(ParseOptions(this.GetBrackets(name,'')));
       var num = this.GetArgument(name);
       this.Push(SINumberListParser(num,options,this.stack.env).mml());
     },	
 
 	numrange: function (name) {
-      var options = SIunitxOptions(OptionsParser(this.GetBrackets(name,'')).allkv());
+      var options = SIunitxOptions(ParseOptions(this.GetBrackets(name,'')));
       var num1 = this.GetArgument(name);
       var num2 = this.GetArgument(name);
       this.Push(SINumberParser(num1,options,this.stack.env).mml());
