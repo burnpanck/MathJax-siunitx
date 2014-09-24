@@ -93,9 +93,10 @@ MathJax.Hub.Register.StartupHook("TeX Jax Ready", function () {
       this._default = def;
     },
     Validate: function(val,name,obj){
+      val = parseInt(val)
       if(!Number.isInteger(val))
         throw ValidationError(obj,name,this,val,"must be an integer");
-      return +val;
+      return val;
     }
   });
   var Literal = ValidationBase.Subclass({
@@ -146,9 +147,11 @@ MathJax.Hub.Register.StartupHook("TeX Jax Ready", function () {
         this.SetMany(values);
     },
     Set: function(prop,value){
-      if(this._options[prop] === undefined)
+      if(this._options[prop] === undefined){
         throw ValidationError(this,prop,undefined,value,"does not exist");
-      this[prop] = value;
+      } else {
+        this[prop] = value;
+      }
     },
     SetMany: function(values){
       for(var prop in values)
@@ -922,6 +925,9 @@ MathJax.Hub.Register.StartupHook("TeX Jax Ready", function () {
    * such that TEX.Parse's namespace is not cluttered too much.
    */
   var SIunitxCommands = {
+    sisetup: function (name) {
+      var options = this.GetArgument(name);
+    },
     si: function (name) {
       var options = SIunitxOptions(ParseOptions(this.GetBrackets(name,'')));
       var units = this.GetArgument(name);
@@ -1035,6 +1041,7 @@ MathJax.Hub.Register.StartupHook("TeX Jax Ready", function () {
       //
       //  Set up the macros for SI units
       //
+      sisetup:   'SIunitx',
       si:   'SIunitx',
       SI:   'SIunitx',
       SIlist:   'SIunitx',
