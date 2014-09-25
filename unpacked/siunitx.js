@@ -269,9 +269,9 @@ MathJax.Hub.Register.StartupHook("TeX Jax Ready", function () {
     'copy-decimal-marker': Switch(false),
     'exponent-base': Literal('10'),
     'exponent-product': Math('\\times'),
-    'group-digits': Choice(true,false,'decimal','integer'),
-    'group-minimum-digits': Integer(5),
-    'group-separator': Literal('\\,'),
+    'group-digits': Choice('true','false','decimal','integer'),  // done
+    'group-minimum-digits': Integer(5),         // done
+    'group-separator': Literal('\\,'),          // donw
     'negative-color': Literal(''),
     'open-bracket': Literal('('),
     'output-close-uncertainty': Literal(')'),
@@ -285,16 +285,16 @@ MathJax.Hub.Register.StartupHook("TeX Jax Ready", function () {
 
     // Multi-part number options
     'fraction-function': Macro('\\frac'),
-    'input-product': Literal('x'),
-    'input-quotient': Literal('/'),
-    'output-product': Math('\\times'),
-    'output-quotient': Literal('/'),
+    'input-product': Literal('x'),              // done
+    'input-quotient': Literal('/'),             // done
+    'output-product': Math('\\times'),          // done
+    'output-quotient': Literal('/'),            // done
     'quotient-mode': Choice('symbol','fraction'),
       
     // lists and ranges of numbers
-    'list-final-separator': Literal(' and '),
-    'list-pair-separator': Literal(' and '),
-    'list-separator': Literal(', '),
+    'list-final-separator': Literal(' and '),   // done
+    'list-pair-separator': Literal(' and '),    // done
+    'list-separator': Literal(', '),            // done
     'range-phrase': Literal(' to '),
       
       // angle options
@@ -477,7 +477,7 @@ MathJax.Hub.Register.StartupHook("TeX Jax Ready", function () {
     lux: ['lx'],
     newton: ['N','N'],
     ohm: [MML.entity("#x03a9"),'ohm'],
-    pascal: ['pa','Pa'],
+    pascal: ['Pa'],
     radian: ['rad'],
     siemens: ['S'],
     sievert: ['Sv'],
@@ -846,14 +846,12 @@ MathJax.Hub.Register.StartupHook("TeX Jax Ready", function () {
               val += ',' + opts[i];
           }
           val = val.trim();
-//          if(val.startsWith('{') && val.endsWith('}'))
-//              val = val.slice(1,-1);
+          if(val[0] =='{' && val[val.length-1]=='}')
+              val = val.slice(1,-1);
           ret[key] = val;
       }
       return ret;
   };
-  
-  console.log(ParseOptions('a,b=1,c={(1,2)},d=\\{'));
     
   /*
    *  The number parsers
@@ -873,37 +871,88 @@ MathJax.Hub.Register.StartupHook("TeX Jax Ready", function () {
       this.Parse();
 	},
 	GenerateRegex: function(options){
+      function reescape(s) {
+        return s.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+      };
 	  var decimal_sep = '(?:\\.|,)';
 	  var sign = '(\\+|-|\\+-|\\\\pm|\\\\mp)';
 	  var digit = '[0-9]';
 	  var complex_root = '(?:i|j)';
 	  var exponent = '(?:[eEdD](-?\\d+))';
-	  
+	  var product = reescape(this.options['input-product']);
+      var quotient = reescape(this.options['input-quotient']);
+        
 	  var decimal_number = '('+digit+'*)(?:'+decimal_sep+'('+digit+'*))?'; // 2 grps
 	  var imaginary_number = '(?:'+decimal_number+complex_root+'|'+complex_root+decimal_number+')'; // 2 + 2 = 4 grps
 	  var complex_number = sign+'?'+decimal_number+'(?:'+sign+imaginary_number+')?'; // 1 + 2 + 1 + 4 = 8 grps
 	  var full_number = complex_number + exponent+'?'; // 8+1= 9 grps
-	  
+      var multipart = '('+product+'|'+quotient+')'; // 1 grp
+      var multi_part_number = full_number + '(?:'+multipart+'('+full_number+'(?:'+multipart+full_number+')*))?'; // 9+1+1+9+1+9 = 30 grps
+        
 //	  console.log(full_number);
 	  
-	  var ret = new RegExp('^'+full_number+'$');
-	  return ret;
+	  var ret = new RegExp('^'+multi_part_number+'$');
+	  return ret
     },
     Parse: function () {
 	  var str = this.string.replace(/\s+/gi,'');
+      this.parsed = this._parse_multi_part_number(str);
+    },
+    _parse_multi_part_number: function(str){
 	  var m = this.regex.exec(str);
 	  if(!m){
-		this.parsed = this.string;
-		return;
+		return str;
 	  }
+      var ret = this._parse_full_number(m);
+      while(m[10]){
+          // an additional part is available:
+          var bracket = false;
+          if(m[10] == this.options['input-quotient']){
+              ret += this.options['output-quotient'];
+              bracket = true;
+          } else {
+              ret += this.options['output-product'];
+          }
+          m = this.regex.exec(m[11]);
+          ret += this._parse_full_number(m,bracket);
+      }
+	  return ret;
+    },
+    _parse_full_number: function(m,bracket_exponent){
+      var opts =  this.options;
 	  function PSign(sign){return {'+-':'\\pm','-+':'\\mp'}[sign] || sign;} // TODO: optimize!
-	  var ret = (m[1] ? PSign(m[1]) : '') + (m[2] || '0') + (m[3] ? '.'+m[3] : '');
+      function PNumber(integer,decimal){
+          var gd = opts['group-digits'];
+          var md = opts['group-minimum-digits'];
+          var gs = opts['group-separator'];
+
+          integer = integer || '0';
+          var l = integer.length;
+          if(l>=md && (gd=='true' || gd=='integer')){
+              l-=3;
+              for(;l>0;l-=3){
+                  integer = integer.slice(0,l) + gs + integer.slice(l);
+              }
+          }
+
+          if(!decimal)
+              return integer;
+          
+          var l = decimal.length;
+          if(l>=md && (gd=='true' || gd=='decimal')){
+              l-=1+(l-1)%3;
+              for(;l>0;l-=3){
+                  decimal = decimal.slice(0,l) + gs + decimal.slice(l);
+              }
+          }
+          
+          return integer + '.' + decimal;
+      }
+	  var ret = (m[1] ? PSign(m[1]) : '') + PNumber(m[2],m[3]);
 	  var cplx = !!m[4];
 	  if(cplx){
 		// have a complex number:
-		var integer = m[5] || m[7];
-		var decimal = m[6] || m[8];
-		ret += PSign(m[4]) + (integer || '0') + (decimal ? '.'+decimal : '') +'\\mathrm{i}';
+		ret += PSign(m[4]) + PNumber(m[5] || m[7],m[6] || m[8]) +'\\mathrm{i}';
 	  }
 	  var exp = !!m[9];
 	  if(exp){
@@ -911,14 +960,35 @@ MathJax.Hub.Register.StartupHook("TeX Jax Ready", function () {
 		  ret = '\\left(' + ret + '\\right)';
 		}
 		ret += '\\times 10^{'+m[9]+'}';
+        if(bracket_exponent)
+          ret = '\\left(' + ret + '\\right)';
 	  }
-	  this.parsed = ret;
+      return ret;
     },
 	mml: function() {
 		return TEX.Parse(this.parsed).mml();
 	}
   });
-  var SINumberListParser = SINumberParser.Subclass({});
+  var SINumberListParser = SINumberParser.Subclass({
+    Parse: function () {
+	  var str = this.string.replace(/\s+/gi,'');
+      var numbers = str.split(';');
+      var parsed = '';
+      for(var idx=0;idx<numbers.length;++idx){
+          if(idx==numbers.length-1){
+              if(idx==1){
+                  parsed += '\\text{'+this.options['list-pair-separator']+'}';
+              } else if(idx) {
+                  parsed += '\\text{'+this.options['list-final-separator']+'}';
+              }
+          } else if(idx) {
+              parsed += '\\text{'+this.options['list-separator']+'}';
+          }
+          parsed += this._parse_multi_part_number(numbers[idx]);
+      }
+      this.parsed = parsed;
+    }
+   });
   
   /*
    * This is essentially a namespace for the various functions needed,
