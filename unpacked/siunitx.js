@@ -601,6 +601,7 @@ MathJax.Hub.Register.StartupHook("TeX Jax Ready", function () {
       this.cur_pfxpow = undefined;
       this.per_active = false;
 	  this.has_literal = false; // Set to true if non-siunitx LaTeX is encountered in input
+      this.literal_chars = ''; // building unit char by char
 	  this.units = [];
       this.options = options;
       arguments.callee.SUPER.Init.call(this,string,env);
@@ -630,6 +631,7 @@ MathJax.Hub.Register.StartupHook("TeX Jax Ready", function () {
       
 	// This is used to identify non-siunitx LaTeX in the input
     Push: function () {
+        this.finishLiteralUnit(); // in case we're still caching some chars
         for(var idx=0;idx<arguments.length;idx++){
             var arg = arguments[idx];
             if(!(arg instanceof STACKITEM.stop)){
@@ -643,12 +645,32 @@ MathJax.Hub.Register.StartupHook("TeX Jax Ready", function () {
 	PushUnitFallBack: function() {this.stack.Push.apply(this.stack,arguments);},
 	
     csFindMacro: function (name) {
+      this.finishLiteralUnit();      // any macro should finish previous units
+        
       var macro = UNITSMACROS[name];
       if( macro ) return macro;
       
       return arguments.callee.SUPER.csFindMacro.call(this,name);
     },
-	
+    /*
+     *  Handle a single letter
+     */
+    Variable: function (c) {
+      this.literal_chars += c;
+    },	
+      
+      // the dot ('.') is considered a number!
+    Number: function(c) {
+        if(c=='.')
+            return this.finishLiteralUnit();
+        arguments.callee.SUPER.Number.call(this,c);
+    },
+      
+    // here, it's a unit separator
+    Tilde: function(c) {
+        this.finishLiteralUnit();
+    },
+      
 	Unsupported: function() {}, // ignore this macro
     
 	Of: function(name) {
@@ -751,6 +773,22 @@ MathJax.Hub.Register.StartupHook("TeX Jax Ready", function () {
     },
       
     SIUnit: function (name, unit) {
+	  this.pushUnit(unit);
+    },
+      
+    finishLiteralUnit: function() {
+        if(!this.literal_chars)
+            return;
+        this.pushUnit({
+            symbol: this.literal_chars,
+            name: undefined,
+            category: 'literal',
+            abbrev: this.literal_chars
+        });
+        this.literal_chars = '';
+    },
+      
+    pushUnit: function(unit) {
 	  // Add to units
 	  this.units.push({
 		unit: unit,
@@ -782,11 +820,11 @@ MathJax.Hub.Register.StartupHook("TeX Jax Ready", function () {
         content.push(MML.chars(curstring));
       var def = {mathvariant: MML.VARIANT.NORMAL};
       this.PushUnitFallBack(this.mmlToken(MML.mi.apply(MML.mi,content).With(def)));
-        
+
       this.cur_prefix = undefined;
       this.cur_pfxpow = undefined;
       if(!this.options['sticky-per'])
-          this.per_active = false;
+          this.per_active = false;    
     }
   });
   MathJax.Extension["TeX/siunitx"].SIUnitParser = SIUnitParser;
