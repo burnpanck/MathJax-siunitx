@@ -275,18 +275,18 @@ MathJax.Hub.Register.StartupHook("TeX Jax Ready", function () {
     'bracket-negative-numbers': Switch(),
     'bracket-numbers': Switch(true),
     'close-bracket': Literal(')'),
-    'complex-root-position': Choice('after-number','before-number'),
+    'complex-root-position': Choice('after-number','before-number'), // done
     'copy-complex-root': Switch(false),
     'copy-decimal-marker': Switch(false),
-    'exponent-base': Literal('10'),
-    'exponent-product': Math('\\times'),
+    'exponent-base': Literal('10'),				// done
+    'exponent-product': Math('\\times'),		// done
     'group-digits': Choice('true','false','decimal','integer'),  // done
     'group-minimum-digits': Integer(5),         // done
-    'group-separator': Literal('\\,'),          // donw
+    'group-separator': Literal('\\,'),          // done
     'negative-color': Literal(''),
     'open-bracket': Literal('('),
     'output-close-uncertainty': Literal(')'),
-    'output-complex-root': Literal('\\ensuremath{\\mathrm{i}}'),
+    'output-complex-root': Literal('\\mathrm{i}'),	// done
     'output-decimal-marker': Literal('.'),
     'output-exponent-marker': Literal(''),
     'output-open-uncertainty': Literal('('),
@@ -333,8 +333,9 @@ MathJax.Hub.Register.StartupHook("TeX Jax Ready", function () {
     'literal-superscript-as-power': Switch(true),
     'inter-unit-product': Literal('\\,'),
     'parse-units': Switch(true),
+	// per-mode: partially done: reciprocal, symbol, fraction
     'per-mode': Choice('reciprocal','reciprocal-positive-first','symbol','repeated-symbol','fraction','symbol-or-fraction'),
-    'per-symbol': Literal('/'),
+    'per-symbol': Literal('/'),	 // done
     'power-font': Choice('number','unit'),
     'prefixes-as-symbols': Switch(true),
     'qualifier-mode': Choice('subscript','brackets','phrase','space','text'),
@@ -628,10 +629,59 @@ MathJax.Hub.Register.StartupHook("TeX Jax Ready", function () {
         // no literal, all information in this.units
         // => generate fresh MML here
         var stack = TEX.Stack({},true);
+		var permode = this.options['per-mode'];
 		var mythis = this;
-        this.units.forEach(function(u){
-            stack.Push(mythis.UnitMML(u));
-        });          
+		var all = [];
+		var norm = [];
+		var recip = [];
+		this.units.forEach(function(unit){
+			var power = unit.power === undefined ? 1 : unit.power;
+			if(unit.inverse) power = -power;
+			if(power > 0) {
+				norm.push(unit);
+			} else {
+				recip.push(unit);
+			}
+			all.push(unit);
+		}); 
+
+		if(permode==='reciprocal' || !recip.length){
+			all.forEach(function(u){
+				stack.Push(mythis.UnitMML(u));
+			}); 
+		} else if(permode==='symbol'){
+			norm.forEach(function(u){
+				stack.Push(mythis.UnitMML(u));
+			}); 
+			stack.Push(this.mmlToken(MML.mo(MML.chars(this.options['per-symbol']).With({fence: false, stretchy: false}))));
+			if(recip.length===1){
+				var u = recip[0];
+				u.inverse = false;
+				stack.Push(this.UnitMML(u));
+			} else {
+				stack.Push(this.mmlToken(MML.mo(MML.chars('(').With({fence: false, stretchy: false}))));
+				recip.forEach(function(u){
+					u.inverse = false;
+					stack.Push(mythis.UnitMML(u));
+				}); 
+				stack.Push(this.mmlToken(MML.mo(MML.chars(')').With({fence: false, stretchy: false}))));
+			}
+		} else if(permode==='fraction'){
+			var num = TEX.Stack({},true);
+			var den = TEX.Stack({},true);
+			norm.forEach(function(u){
+				num.Push(mythis.UnitMML(u));
+			}); 
+			recip.forEach(function(u){
+				u.inverse = false;
+				den.Push(mythis.UnitMML(u));
+			}); 
+			num.Push(STACKITEM.stop());
+			den.Push(STACKITEM.stop());
+			stack.Push(MML.mfrac(num.Top().data[0],den.Top().data[0]));
+		} else {
+			TEX.Error("Unimplemented per-mode "+permode);
+		}
         stack.Push(STACKITEM.stop());
         if (stack.Top().type !== "mml") {return null}
         return stack.Top().data[0];
@@ -769,7 +819,7 @@ MathJax.Hub.Register.StartupHook("TeX Jax Ready", function () {
       if(curstring)
         content.push(MML.chars(curstring));
       var def = {mathvariant: MML.VARIANT.NORMAL};
-      var mml = MML.mi.apply(MML.mi,content).With(def)
+      var mml = MML.mi.apply(MML.mi,content).With(def);
       var power = unit.power === undefined ? 1 : unit.power;
       if(unit.inverse) power = -power;
       if(power != 1){
@@ -924,7 +974,7 @@ MathJax.Hub.Register.StartupHook("TeX Jax Ready", function () {
         return s.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
       };
 	  var decimal_sep = '(?:\\.|,)';
-	  var sign = '(\\+|-|\\+-|\\\\pm|\\\\mp)';
+	  var sign = '(\\+|-|\\\\pm|\\\\mp|\\\\le|\\\\leq|\\\\ll|\\\\ge|\\\\geq|\\\\gg|\\\\sim)';
 	  var digit = '[0-9]';
 	  var complex_root = '(?:i|j)';
 	  var exponent = '(?:[eEdD](-?\\d+))';
@@ -945,6 +995,17 @@ MathJax.Hub.Register.StartupHook("TeX Jax Ready", function () {
     },
     Parse: function () {
 	  var str = this.string.replace(/\s+/gi,'');
+	  var replacements = {
+		'+-':'\\pm',
+		'-+':'\\mp',
+		'<=':'\\leq',
+		'>=':'\\geq',
+		'<<':'\\ll',
+		'>>':'\\gg',
+	  };
+	  for(key in replacements){
+		str = str.replace(key,replacements[key]);
+	  }
       this.parsed = this._parse_multi_part_number(str);
     },
     _parse_multi_part_number: function(str){
@@ -969,7 +1030,7 @@ MathJax.Hub.Register.StartupHook("TeX Jax Ready", function () {
     },
     _parse_full_number: function(m,bracket_exponent){
       var opts =  this.options;
-	  function PSign(sign){return {'+-':'\\pm','-+':'\\mp'}[sign] || sign;} // TODO: optimize!
+	  function PSign(sign){return sign;}
       function PNumber(integer,decimal){
           var gd = opts['group-digits'];
           var md = opts['group-minimum-digits'];
@@ -997,18 +1058,26 @@ MathJax.Hub.Register.StartupHook("TeX Jax Ready", function () {
           
           return integer + '.' + decimal;
       }
+	  var exp = !!m[9];
+	if(!(m[2] || m[3] || m[4]) && exp){
+		// non-complex number without mantissa
+		return (m[1] ? PSign(m[1]) : '') + '10^{'+m[9]+'}';
+	}
 	  var ret = (m[1] ? PSign(m[1]) : '') + PNumber(m[2],m[3]);
 	  var cplx = !!m[4];
 	  if(cplx){
 		// have a complex number:
-		ret += PSign(m[4]) + PNumber(m[5] || m[7],m[6] || m[8]) +'\\mathrm{i}';
+		ret += PSign(m[4])
+		if(opts['complex-root-position']==='before-number')
+			ret += opts['output-complex-root'] + PNumber(m[5] || m[7],m[6] || m[8]);
+		else
+			ret += PNumber(m[5] || m[7],m[6] || m[8]) + opts['output-complex-root'];
 	  }
-	  var exp = !!m[9];
 	  if(exp){
 		if(cplx){
 		  ret = '\\left(' + ret + '\\right)';
 		}
-		ret += '\\times 10^{'+m[9]+'}';
+		ret += opts['exponent-product']+' '+opts['exponent-base']+'^{'+m[9]+'}';
         if(bracket_exponent)
           ret = '\\left(' + ret + '\\right)';
 	  }
