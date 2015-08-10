@@ -731,7 +731,19 @@ MathJax.Hub.Register.StartupHook("TeX Jax Ready", function () {
     Tilde: function(c) {
         this.finishLiteralUnit();
     },
-      
+
+    /*
+     *  Handle ^, _, and '
+     */
+    Superscript: function (c) {
+      this.finishLiteralUnit();
+      arguments.callee.SUPER.Superscript.call(this,c);
+    },
+    Subscript: function (c) {
+      this.finishLiteralUnit();
+      arguments.callee.SUPER.Subscript.call(this,c);
+    },
+
 	Unsupported: function() {}, // ignore this macro
     
 	Of: function(name) {
@@ -1089,22 +1101,26 @@ MathJax.Hub.Register.StartupHook("TeX Jax Ready", function () {
   });
   var SINumberListParser = SINumberParser.Subclass({
     Parse: function () {
+      // TODO: do not process list separators via TeX parsing
 	    var str = this.string.replace(/\s+/gi,'');
       var numbers = str.split(';');
-      var parsed = '';
+      var parsed = [];
       for(var idx=0;idx<numbers.length;++idx){
           if(idx==numbers.length-1){
               if(idx==1){
-                  parsed += '\\text{'+this.options['list-pair-separator']+'}';
+                  parsed.push('\\text{'+this.options['list-pair-separator']+'}');
               } else if(idx) {
-                  parsed += '\\text{'+this.options['list-final-separator']+'}';
+                  parsed.push('\\text{'+this.options['list-final-separator']+'}');
               }
           } else if(idx) {
-              parsed += '\\text{'+this.options['list-separator']+'}';
+              parsed.push('\\text{'+this.options['list-separator']+'}');
           }
-          parsed += this._parse_multi_part_number(numbers[idx]);
+          parsed.push(this._parse_multi_part_number(numbers[idx]));
       }
       this.parsed = parsed;
+    },
+    mml: function() {
+      return TEX.Parse(this.parsed.join('')).mml();
     }
    });
   
@@ -1151,22 +1167,33 @@ MathJax.Hub.Register.StartupHook("TeX Jax Ready", function () {
       var num = this.GetArgument(name);
       var preunits = this.GetBrackets(name,'');
       var units = this.GetArgument(name);
-      if(preunits){
-        this.Push(SIUnitParser(preunits,options,this.stack.env).mml());
-        this.Push(MML.mspace().With({
-          width: MML.LENGTH.MEDIUMMATHSPACE,
-          mathsize: MML.SIZE.NORMAL,
-          scriptlevel:0
-        }));
+      if(preunits) {
+        preunits = SIUnitParser(preunits, options, this.stack.env);
       }
-      this.Push(SINumberListParser(num,options,this.stack.env).mml());
-      this.Push(MML.mspace().With({
+      num = SINumberListParser(num,options,this.stack.env).parsed;
+      units = SIUnitParser(units, options, this.stack.env);
+      function medspace(){return MML.mspace().With({
         width: MML.LENGTH.MEDIUMMATHSPACE,
         mathsize: MML.SIZE.NORMAL,
         scriptlevel:0
-      }));
-      this.Push(SIUnitParser(units,options,this.stack.env).mml());
-    },	
+      });};
+      for(var idx=0;idx<num.length;++idx){
+        var n = num[idx];
+        if(idx&1){
+          // this is a separator
+          this.Push(TEX.Parse(n).mml());
+        } else {
+          // this is a number
+          if(preunits){
+            this.Push(preunits.mml());
+            this.Push(medspace());
+          }
+          this.Push(TEX.Parse(n).mml());
+          this.Push(medspace());
+          this.Push(units.mml());
+        }
+      }
+    },
 
     SIrange: function (name) {
       var options = SIunitxOptions(ParseOptions(this.GetBrackets(name,'')));
@@ -1221,7 +1248,32 @@ MathJax.Hub.Register.StartupHook("TeX Jax Ready", function () {
 	ang: function (name) {
       var options = SIunitxOptions(ParseOptions(this.GetBrackets(name,'')));
       var num = this.GetArgument(name);
-      this.Push(SINumberParser(num,options,this.stack.env).mml());
+      num = SINumberListParser(num,options,this.stack.env).parsed;
+      if(num.length>5)
+        TEX.Error("More than three elements in angle specification");
+      units = [
+          'degree',
+          undefined,
+          'arcminute',
+          undefined,
+          'arcsecond'
+      ];
+      var def = {mathvariant: MML.VARIANT.NORMAL};
+      for(var idx=0;idx<num.length;++idx){
+        var n = num[idx];
+        if(idx&1){
+          // this is a separator
+          // ignore here
+          // TODO: factor out list separators from SINumberListParser
+        } else {
+          if(!n) continue;
+          this.Push(TEX.Parse(n).mml());
+          var u = UNITSMACROS[units[idx]][1];
+          // assumes that all symbol's we encounter are MML.entity
+          var mml = MML.mi.apply(MML.mi, [u.symbol]).With(def);
+          this.Push(this.mmlToken(mml));
+        }
+      }
     },
 	
 	numlist: function (name) {
