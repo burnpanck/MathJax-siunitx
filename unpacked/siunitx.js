@@ -287,7 +287,7 @@ MathJax.Hub.Register.StartupHook("TeX Jax Ready", function () {
     'open-bracket': Literal('('),
     'output-close-uncertainty': Literal(')'),
     'output-complex-root': Literal('\\mathrm{i}'),	// done
-    'output-decimal-marker': Literal('.'),
+    'output-decimal-marker': Literal('.'),        // done
     'output-exponent-marker': Literal(''),
     'output-open-uncertainty': Literal('('),
     'separate-uncertainty': Switch(false),
@@ -1068,7 +1068,7 @@ MathJax.Hub.Register.StartupHook("TeX Jax Ready", function () {
               }
           }
           
-          return integer + '.' + decimal;
+          return integer + opts['output-decimal-marker'] + decimal;
       }
 	  var exp = !!m[9];
 	if(!(m[2] || m[3] || m[4]) && exp){
