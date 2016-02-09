@@ -1046,7 +1046,7 @@ MathJax.Hub.Register.StartupHook("TeX Jax Ready", function () {
       function PNumber(integer,decimal){
           var gd = opts['group-digits'];
           var md = opts['group-minimum-digits'];
-          var gs = opts['group-separator'];
+          var gs = '{' + opts['group-separator'] + '}';
 
           integer = integer || '0';
           var l = integer.length;
@@ -1068,7 +1068,7 @@ MathJax.Hub.Register.StartupHook("TeX Jax Ready", function () {
               }
           }
           
-          return integer + opts['output-decimal-marker'] + decimal;
+          return integer + '{' + opts['output-decimal-marker'] + '}' + decimal;
       }
 	  var exp = !!m[9];
 	if(!(m[2] || m[3] || m[4]) && exp){

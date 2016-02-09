@@ -1,0 +1,47 @@
+// PEG.js grammar
+
+FullNum = mantissa:ComplexNum exp:(_ Exponent)? {
+	exp = exp ? exp[1] : null;
+	return {
+    	re:mantissa.re,
+        im:mantissa.im,
+        exp:exp,
+    };
+}
+ComplexNum = re:(Sign? _ Decimal) im:(_ Sign _ ImaginaryNum)? {
+	return {
+    	re: (re[0] || 1) * re[2],
+        im: im ? (im[1] || 1) * im[3] : null,
+    }
+}
+
+ImaginaryNum = ImaginaryNumPost / ImaginaryNumPre
+ImaginaryNumPost = num:Decimal _ ComplexRoot { return num; }
+ImaginaryNumPre = ComplexRoot _ num:Decimal { return num; }
+
+ComplexRoot "complexRoot" = [ij]
+
+Exponent = [eEdD] _ sign:(Sign _)? exponent:Integer {
+	return sign ? sign[0]*exponent : exponent;
+}
+
+Sign = [+-] { return text()=='-' ? -1 : 1; }
+Predicate = Sign / '+-' // TODO: full list
+
+DecimalSep = [.,]
+
+Decimal "decimal"
+  = integer:Integer fractional:( _ DecimalSep _ [0-9]+)? {
+  fractional = fractional ? fractional[3].join('') : '0';
+  return integer + (
+    fractional
+  	? parseInt(fractional,10)*Math.pow(10,-fractional.length)
+    : 0
+  );
+}
+
+Integer "integer"
+  = [0-9]+ { return parseInt(text(), 10); }
+
+_ "whitespace"
+  = [ \t\n\r]*
