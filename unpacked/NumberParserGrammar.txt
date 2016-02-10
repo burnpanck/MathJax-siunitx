@@ -1,14 +1,16 @@
-// PEG.js grammar
+start = _ num:FullNum _ {return num;}
 
-FullNum = mantissa:ComplexNum exp:(_ Exponent)? {
-	exp = exp ? exp[1] : null;
+FullNum = rel:(Rel _)? mantissa:ComplexNum exp:(_ Exponent)? {
+	exp = exp && exp[1];
+    rel = rel && rel[0];
 	return {
+    	rel:rel,
     	re:mantissa.re,
         im:mantissa.im,
         exp:exp,
     };
 }
-ComplexNum = re:(Sign? _ Decimal) im:(_ Sign _ ImaginaryNum)? {
+ComplexNum = re:(DblSign? _ IntOrDec) im:(_ DblSign _ ImaginaryNum)? {
 	return {
     	re: (re[0] || 1) * re[2],
         im: im ? (im[1] || 1) * im[3] : null,
@@ -16,24 +18,36 @@ ComplexNum = re:(Sign? _ Decimal) im:(_ Sign _ ImaginaryNum)? {
 }
 
 ImaginaryNum = ImaginaryNumPost / ImaginaryNumPre
-ImaginaryNumPost = num:Decimal _ ComplexRoot { return num; }
-ImaginaryNumPre = ComplexRoot _ num:Decimal { return num; }
+ImaginaryNumPost = num:IntOrDec _ ComplexRoot { return num; }
+ImaginaryNumPre = ComplexRoot _ num:IntOrDec { return num; }
 
 ComplexRoot "complexRoot" = [ij]
 
-Exponent = [eEdD] _ sign:(Sign _)? exponent:Integer {
+Exponent = [eEdD] _ sign:(Sign _)? exponent:IntOrDec {
 	return sign ? sign[0]*exponent : exponent;
 }
 
 Sign = [+-] { return text()=='-' ? -1 : 1; }
-Predicate = Sign / '+-' // TODO: full list
+PM = ('+-' / '\\pm') {return '\\pm';}
+MP = ('-+' / '\\mp') {return '\\mp';}
+DblSign = PM / MP / Sign
+
+LL = ('<<' / '\\ll') {return '\\ll';}
+LT = ('<' / '\\lt') {return '\\lt';}
+LE = ('<=' / '\\le') {return '\\le';}
+Rel = LL / LT / LE // TODO: full list
 
 DecimalSep = [.,]
 
+IntOrDec = Decimal / Integer
+
 Decimal "decimal"
-  = integer:Integer fractional:( _ DecimalSep _ [0-9]+)? {
-  fractional = fractional ? fractional[3].join('') : '0';
-  return integer + (
+  = integer:(Integer _)? DecimalSep fractional:(_ [0-9]+)? {
+  if(integer===null && fractional===null)
+  	expected('not both integer and fractional part omitted'+text())
+  integer = integer ? integer[0] : null;
+  fractional = fractional ? fractional[1].join('') : null;
+  return (integer || 0) + (
     fractional
   	? parseInt(fractional,10)*Math.pow(10,-fractional.length)
     : 0
