@@ -1,97 +1,17 @@
-% 3 siunitx for the impatient
+% various \num corner cases
+\num{<<-1-+1ie.0x>>2e14 , 2}
+\num{<<-,1-+1ie.0/>>2e14 , 2}
+\num{1x>=2/<=3(1)e.1x<<4-i1.(1)e1/4+2ix5} % multiple quotients and products
+\num[round-integer-to-decimal,zero-decimal-to-integer,round-mode=figures]{1} % round-integer-to-decimal vs. zero-decimal-to-integer
+\num[scientific-notation=engineering]{12e2.1} % scientific-notation and fractional exponents?
+\num[minimum-integer-digits=3,scientific-notation=engineering]{000012.1e2} % leading zeros?
 
-\num{12345,67890}
-\num{1+-2i}
-\num{.3e45}
-\num{1.654 x 2.34 x 3.430}
+% different number of decimal places between uncertainty and number
+\num{1 +- 0.002}
+\num{1.0 +- 0.002}
+\num{1.00 +- 0.002}
+\num{1.000 +- 0.002}
+\num{1.0000 +- 0.002}
 
-\si{kg.m.s^{-1}}
-\si{\kilogram\metre\per\second}
-\si[per-mode=symbol]{\kilogram\metre\per\second}
-\si[per-mode=symbol]{\kilogram\metre\per\ampere\per\second}
-
-\numlist{10;20;30}
-\SIlist{0.13;0.67;0.80}{\milli\metre}
-\numrange{10}{20}
-\SIrange{0.13}{0.67}{\milli\metre}
-
-% 4.2 Numbers
-
-\num{123}
-\num{1234}
-\num{12345}
-\num{0.123}
-\num{0,1234}
-\num{.12345}
-\num{3.45d-4}
-\num{-e10}
-
-\numlist{10;30;50;70}
-
-\numrange{10}{30}
-
-\ang{10}
-\ang{12.3}
-\ang{4,5}
-\ang{1;2;3}
-\ang{;;1}
-\ang{+10;;}
-\ang{-0;1;}
-
-% 4.3 Units
-
-\si{kg.m/s^2}
-\si{g_{polymer}~mol_{cat}.s^{-1}}
-    
-\si{\kilo\gram\metre\per\square\second}
-\si{\gram\per\cubic\centi\metre}
-\si{\square\volt\cubic\lumen\per\farad}
-\si{\metre\squared\per\gray\cubic\lux}
-\si{\henry\second}
-
-\SI[mode=text]{1.23}{J.mol^{-1}.K^{-1}}
-\SI{.23e7}{\candela}
-\SI[per-mode=symbol]{1.99}[\$]{\per\kilogram}   
-\SI[per-mode=fraction]{1,345}{\coulomb\per\mole}
-
-\SIlist{10;30;45}{\metre}    
-\SIrange{10}{30}{\metre}    
-
-% 4.4 The unit macros
-
-\si{\square\becquerel}
-\si{\joule\squared\per\lumen}   
-\si{\cubic\lux\volt\tesla\cubed} 
-
-\si{\henry\tothe{5}}
-\si{\raiseto{4.5}\radian}
-
-\si{\joule\per\mole\per\kelvin}    
-\si{\joule\per\mole\kelvin}    
-\si{\per\henry\tothe{5}}    
-\si{\per\square\becquerel}
-
-\si{\kilogram\of{metal}}
-\SI[qualifier-mode = brackets]{0.1}{\milli\mole\of{cat}\per\kilogram\of{prod}}
-
-\si[per-mode = fraction]{\cancel\kilogram\metre\per\cancel\kilogram\per\second}
-\si{\highlight{red}\kilogram\metre\per\second}
-\si[unit-color = purple]{\highlight{red}\kilogram\metre\per\second}
-
-\si{\kilo}
-\si{\micro}
-\si[prefixes-as-symbols = false]{\kilo}
-
-\si{\kilo\gram\micro}\text{<< this shoulg raise an error}
-\SI{10}{\micro}\text{<< this shoulg raise an error}
-
-% color vs. unit-color
-
-\SI[color=red,unit-color=blue]{1}{\metre}
-\SI[unit-color=blue,color=red]{1}{\metre}
-\SI[color=red,unit-color=blue,number-color=green]{1}{\metre}
-\SI[unit-color=blue,color=red,number-color=green]{1}{\metre}
-
-% sticky per
-
-\si[sticky-per=true]{\joule\per\mole\kelvin}
+% preunits
+\SIrange{10e3}{20e3}[CHF]{\per\kg} % preunits and SIrange?
