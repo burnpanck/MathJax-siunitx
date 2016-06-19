@@ -282,6 +282,6 @@ Integer "integer"
 // TODO: siunitx interprets any symbol found in input-symbols
 // as if they were digits.
 Digits = [0-9]+ {return text();}
- 
+
 _ "whitespace"
   = [ \t\n\r]*            // TODO: retain-unit-mantissa retain-zero-exponent
