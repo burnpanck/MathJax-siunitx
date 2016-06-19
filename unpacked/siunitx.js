@@ -1,6 +1,3 @@
-/* -*- Mode: Javascript; indent-tabs-mode:nil; js-indent-level: 2 -*- */
-/* vim: set ts=2 et sw=2 tw=80: */
-
 /*************************************************************
  *
  *  MathJax/extensions/TeX/siunitx.js
@@ -9,7 +6,7 @@
  *
  *  ---------------------------------------------------------------------
  *
- *  Copyright (c) 2011-2014 The MathJax Consortium
+ *  Copyright (c) 2015 Yves Delley, https://github.com/burnpanck
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -162,6 +159,7 @@ MathJax.Hub.Register.StartupHook("TeX Jax Ready", function () {
       return val;
     }
   });
+
   var ConfigData = MathJax.Object.Subclass({
     Init: function(values){
       this._values = {}
