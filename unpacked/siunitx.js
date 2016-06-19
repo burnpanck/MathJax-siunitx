@@ -4,19 +4,19 @@
 /*************************************************************
  *
  *  MathJax/extensions/TeX/siunitx.js
- *  
+ *
  *  Implements some of the features provided by the siunitx LaTeX package.
- *  
+ *
  *  ---------------------------------------------------------------------
- *  
+ *
  *  Copyright (c) 2011-2014 The MathJax Consortium
- * 
+ *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
  *  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,7 +29,7 @@ MathJax.Extension["TeX/siunitx"] = {
 };
 
 MathJax.Hub.Register.StartupHook("TeX Jax Ready", function () {
-  
+
   var TEX = MathJax.InputJax.TeX;
   var TEXDEF = TEX.Definitions;
   var STACK = TEX.Stack;
@@ -69,7 +69,7 @@ MathJax.Hub.Register.StartupHook("TeX Jax Ready", function () {
       return val;
     }
   });
-  
+
   var Choice = ValidationBase.Subclass({
     Init: function(){
       this._default = arguments[0];
@@ -207,7 +207,7 @@ MathJax.Hub.Register.StartupHook("TeX Jax Ready", function () {
       return ret;
     }
   });
-  
+
   var SIunitxOptions = ConfigData.Define({
     // Font detection
 //    'detect-all': Meta({'detect-weight':true,'detect-family':true,'detect-shape':true,'detect-mode':true}),
@@ -219,7 +219,7 @@ MathJax.Hub.Register.StartupHook("TeX Jax Ready", function () {
 //    'detect-none': Meta({'detect-weight':false,'detect-family':false,'detect-shape':false,'detect-mode':false}),
     'detect-shape': Switch(),
     'detect-weight': Switch(),
-      
+
     // Font options
     'color': Literal(''),
     'math-rm': Macro('\\mathrm'),
@@ -247,8 +247,8 @@ MathJax.Hub.Register.StartupHook("TeX Jax Ready", function () {
     'number-text-rm': Macro('\\rmfamily'),
     'number-text-sf': Macro('\\sffamily'),
     'number-text-tt': Macro('\\ttfamily'),
-      
-      
+
+
     // Number parsing
     'input-close-uncertainty': Literal(')'),
     'input-comparators': Literal('<=>\\approx\\ge\\geq\\gg\\le\\leq\\ll\\sim'),
@@ -263,7 +263,7 @@ MathJax.Hub.Register.StartupHook("TeX Jax Ready", function () {
     'input-uncertainty-signs': Literal('\\pm'),
     'input-symbols': Literal('\\pi\\dots'),
     'parse-numbers': Switch(true),
-      
+
     // Number post-processing options
     'add-decimal-zero': Switch(true),
     'add-integer-zero': Switch(true),
@@ -281,7 +281,7 @@ MathJax.Hub.Register.StartupHook("TeX Jax Ready", function () {
     'round-precision': Integer(2),
     'scientific-notation': SwitchChoice('false','true','fixed','engineering'),
     'zero-decimal-to-integer': Switch(),
-      
+
     // Number output
     'bracket-negative-numbers': Switch(),
     'bracket-numbers': Switch(true),
@@ -312,13 +312,13 @@ MathJax.Hub.Register.StartupHook("TeX Jax Ready", function () {
     'output-product': Math('\\times'),          // done
     'output-quotient': Literal('/'),            // done
     'quotient-mode': Choice('symbol','fraction'),
-      
+
     // lists and ranges of numbers
     'list-final-separator': Literal(' and '),   // done
     'list-pair-separator': Literal(' and '),    // done
     'list-separator': Literal(', '),            // done
     'range-phrase': TeXParsedLiteral(' to '),   // done
-      
+
       // angle options
     'add-arc-degree-zero': Switch(false),
     'add-arc-minute-zero': Switch(false),
@@ -326,18 +326,18 @@ MathJax.Hub.Register.StartupHook("TeX Jax Ready", function () {
     'angle-symbol-over-decimal': Switch(false),
     'arc-separator': Literal(false),
     'number-angle-product': Literal(''),
-     
+
       // unit creation
     'free-standing-units': Switch(false),
     'overwrite-functions': Switch(false),
     'space-before-unit': Switch(false),
     'unit-optional-argument': Switch(false),
     'use-xspace': Switch(false),
-      
+
       // additional units
       'abbreviations': Switch(true),
       'binary-units': Switch(),
-      
+
       // Unit output options
     'bracket-unit-denominator': Switch(true),
     'forbid-literal-units': Switch(false),
@@ -362,7 +362,7 @@ MathJax.Hub.Register.StartupHook("TeX Jax Ready", function () {
     'range-units': Choice('repeat','brackets','single')
 
       // Tabular material (unlikely will ever be implemented) => not declared
-      
+
       // symbol options
  /*   'math-angstrom': Literal('\text{\AA}'),
     'math-arcminute': Literal('{}^{\prime}'),
@@ -381,11 +381,11 @@ MathJax.Hub.Register.StartupHook("TeX Jax Ready", function () {
     'text-ohm': Literal('\ensuremath{\Omega}')
                                          */
   });
-  
+
   var UNITSMACROS = {
     // special units
     percent: {name:'percent',symbol:'%',category:'non-unit'},
-      
+
     // powers
     per: ['Per',-1],
     square: ['PowerPfx',2],
@@ -394,17 +394,17 @@ MathJax.Hub.Register.StartupHook("TeX Jax Ready", function () {
     squared: ['PowerSfx',2],
     cubed: ['PowerSfx',3],
     tothe: ['PowerSfx',undefined],
-      
+
     // aliases
     meter: ['Macro','\\metre'],
     deka: ['Macro','\\deca'],
-    
+
     // abbreviations
     celsius: ['Macro','\\degreeCelsius'],
     kg: ['Macro','\\kilogram'],
     amu: ['Macro','\\atomicmassunit'],
     kWh: ['Macro','\\kilo\\watt\\hour'],
-      
+
     // not yet supported:
     of: 'Of',
     cancel: 'Unsupported',
@@ -412,7 +412,7 @@ MathJax.Hub.Register.StartupHook("TeX Jax Ready", function () {
   };
 
   // ******* SI prefixes *******************
-    
+
   var SIPrefixes = (function (def){
     var ret = {};
     for(var pfx in def){
@@ -456,7 +456,7 @@ MathJax.Hub.Register.StartupHook("TeX Jax Ready", function () {
   }
 
   // ******* SI units *******************
-    
+
   function _BuildUnits(category,defs){
     var units = [];
     for(var unit in defs){
@@ -470,7 +470,7 @@ MathJax.Hub.Register.StartupHook("TeX Jax Ready", function () {
     }
     return units;
   }
-    
+
   var SIUnits = (function (arr){
     ret = {};
     arr.forEach(function (unit){
@@ -543,14 +543,14 @@ MathJax.Hub.Register.StartupHook("TeX Jax Ready", function () {
     neper: ['Np'],
   })));
   MathJax.Extension["TeX/siunitx"].SIUnits = SIUnits;
-    
+
   for(var unit in SIUnits){
     unit = SIUnits[unit];
     UNITSMACROS[unit.name] = ['SIUnit',unit];
   }
 
   // ******* unit abbreviations *******************
-      
+
   /*
    * I'm too lazy to write all of the abbreviations by hand now, so here it is
    * programmatically.
@@ -591,7 +591,7 @@ MathJax.Hub.Register.StartupHook("TeX Jax Ready", function () {
     repl += '\\' + unit
     return repl;
   }
-   
+
   // install a number of abbrevs as macros, the same as siunitx does.
   [
     "fg pg ng ug mg g",
@@ -610,11 +610,11 @@ MathJax.Hub.Register.StartupHook("TeX Jax Ready", function () {
     "meV eV keV MeV GeV TeV",
     "fF pF F",
     "K",
-    "dB"    
+    "dB"
   ].forEach(function(abbrset){abbrset.split(' ').forEach(function (abbrev){
       UNITSMACROS[abbrev] = ['Macro',_ParseAbbrev(abbrev)];
   })});
-  
+
   /*
    * This is the TeX parser for unit fields
    */
@@ -654,16 +654,16 @@ MathJax.Hub.Register.StartupHook("TeX Jax Ready", function () {
 				recip.push(unit);
 			}
 			all.push(unit);
-		}); 
+		});
 
 		if(permode==='reciprocal' || !recip.length){
 			all.forEach(function(u){
 				stack.Push(mythis.UnitMML(u));
-			}); 
+			});
 		} else if(permode==='symbol'){
 			norm.forEach(function(u){
 				stack.Push(mythis.UnitMML(u));
-			}); 
+			});
 			stack.Push(this.mmlToken(MML.mo(MML.chars(this.options['per-symbol']).With({fence: false, stretchy: false}))));
 			if(recip.length===1){
 				var u = recip[0];
@@ -674,7 +674,7 @@ MathJax.Hub.Register.StartupHook("TeX Jax Ready", function () {
 				recip.forEach(function(u){
 					u.inverse = false;
 					stack.Push(mythis.UnitMML(u));
-				}); 
+				});
 				stack.Push(this.mmlToken(MML.mo(MML.chars(')').With({fence: false, stretchy: false}))));
 			}
 		} else if(permode==='fraction'){
@@ -682,11 +682,11 @@ MathJax.Hub.Register.StartupHook("TeX Jax Ready", function () {
 			var den = TEX.Stack({},true);
 			norm.forEach(function(u){
 				num.Push(mythis.UnitMML(u));
-			}); 
+			});
 			recip.forEach(function(u){
 				u.inverse = false;
 				den.Push(mythis.UnitMML(u));
-			}); 
+			});
 			num.Push(STACKITEM.stop());
 			den.Push(STACKITEM.stop());
 			stack.Push(MML.mfrac(num.Top().data[0],den.Top().data[0]));
@@ -699,8 +699,8 @@ MathJax.Hub.Register.StartupHook("TeX Jax Ready", function () {
       }
       if (this.stack.Top().type !== "mml") {return null}
       return this.stack.Top().data[0];
-    },      
-      
+    },
+
 	// This is used to identify non-siunitx LaTeX in the input
     Push: function () {
         this.finishLiteralUnit(); // in case we're still caching some chars
@@ -715,13 +715,13 @@ MathJax.Hub.Register.StartupHook("TeX Jax Ready", function () {
     },
 	// While literal fall-back output from proper unit macros use this path
 	PushUnitFallBack: function() {this.stack.Push.apply(this.stack,arguments);},
-	
+
     csFindMacro: function (name) {
       this.finishLiteralUnit();      // any macro should finish previous units
-        
+
       var macro = UNITSMACROS[name];
       if( macro ) return macro;
-      
+
       return arguments.callee.SUPER.csFindMacro.call(this,name);
     },
     /*
@@ -729,15 +729,15 @@ MathJax.Hub.Register.StartupHook("TeX Jax Ready", function () {
      */
     Variable: function (c) {
       this.literal_chars += c;
-    },	
-      
+    },
+
       // the dot ('.') is considered a number!
     Number: function(c) {
         if(c=='.')
             return this.finishLiteralUnit();
         arguments.callee.SUPER.Number.call(this,c);
     },
-      
+
     // here, it's a unit separator
     Tilde: function(c) {
         this.finishLiteralUnit();
@@ -756,7 +756,7 @@ MathJax.Hub.Register.StartupHook("TeX Jax Ready", function () {
     },
 
 	Unsupported: function() {}, // ignore this macro
-    
+
 	Of: function(name) {
 	  var what = this.GetArgument(name);
       if(this.has_literal){
@@ -770,14 +770,14 @@ MathJax.Hub.Register.StartupHook("TeX Jax Ready", function () {
       if(unit.power !== undefined){
         TEX.Error(["SIunitx","double qualification",unit.qual,what]);
       }
-      unit.qual = what;	  
+      unit.qual = what;
     },
-	
+
 	Highlight: function(name) {
 	  var color = this.GetArgument(name);
 	  this.cur_highlight = color;
 	},
-	
+
     Per: function(name){
       if(this.per_active){
         TEX.Error(["SIunitx","double \\per"]);
@@ -785,7 +785,7 @@ MathJax.Hub.Register.StartupHook("TeX Jax Ready", function () {
       }
       this.per_active = true;
     },
-      
+
     PowerPfx: function(name, pow) {
       if(pow === undefined){
         pow = this.GetArgument(name);
@@ -795,7 +795,7 @@ MathJax.Hub.Register.StartupHook("TeX Jax Ready", function () {
       }
       this.cur_pfxpow = pow;
     },
-    
+
     PowerSfx: function(name, pow) {
       if(pow === undefined){
         pow = this.GetArgument(name);
@@ -813,14 +813,14 @@ MathJax.Hub.Register.StartupHook("TeX Jax Ready", function () {
       }
       unit.power = pow;
     },
-      
+
     SIPrefix: function (name, pfx) {
       if(this.cur_prefix){
         TEX.Error(["SIunitx","double SI prefix",this.cur_prefix,pfx]);
       }
       this.cur_prefix = pfx;
     },
-    
+
     UnitMML: function(unit) {
       var parts = [];
       if(unit.prefix)
@@ -855,11 +855,11 @@ MathJax.Hub.Register.StartupHook("TeX Jax Ready", function () {
       }
       return this.mmlToken(mml);
     },
-      
+
     SIUnit: function (name, unit) {
 	  this.pushUnit(unit);
     },
-      
+
     finishLiteralUnit: function() {
         if(!this.literal_chars)
             return;
@@ -871,7 +871,7 @@ MathJax.Hub.Register.StartupHook("TeX Jax Ready", function () {
         });
         this.literal_chars = '';
     },
-      
+
     pushUnit: function(unit) {
 	  // Add to units
 	  this.units.push({
@@ -881,7 +881,7 @@ MathJax.Hub.Register.StartupHook("TeX Jax Ready", function () {
         inverse: this.per_active,
         qual: undefined   // qualification
 	  });
-	
+
 	  // And process fall-back
       var parts = [];
       if(this.cur_prefix)
@@ -908,11 +908,11 @@ MathJax.Hub.Register.StartupHook("TeX Jax Ready", function () {
       this.cur_prefix = undefined;
       this.cur_pfxpow = undefined;
       if(!this.options['sticky-per'])
-          this.per_active = false;    
+          this.per_active = false;
     }
   });
   MathJax.Extension["TeX/siunitx"].SIUnitParser = SIUnitParser;
-  
+
   /*
    * The options parser
    */
@@ -923,7 +923,7 @@ MathJax.Hub.Register.StartupHook("TeX Jax Ready", function () {
           return close;
       return open;
   };
-    
+
   function ParseOptions(str){
       var ret = {};
       str = str.trim();
@@ -940,7 +940,7 @@ MathJax.Hub.Register.StartupHook("TeX Jax Ready", function () {
               continue;
           }
           var val = parts.slice(1).join('=');
-          
+
           var count = 0;
           var pos = -1;
           while(true){
@@ -958,7 +958,7 @@ MathJax.Hub.Register.StartupHook("TeX Jax Ready", function () {
                 } else {
                   count++;
                 }
-              }          
+              }
               if(!count)
                 break;
               pos = val.length;
@@ -974,7 +974,7 @@ MathJax.Hub.Register.StartupHook("TeX Jax Ready", function () {
       }
       return ret;
   };
-    
+
   /*
    *  The number parsers
    */
@@ -1172,7 +1172,7 @@ MathJax.Hub.Register.StartupHook("TeX Jax Ready", function () {
       }));
       this.Push(SIUnitParser(units,options,this.stack.env).mml());
     },
-	
+
     SIlist: function (name) {
       var options = SIunitxOptions(ParseOptions(this.GetBrackets(name,'')));
       var num = this.GetArgument(name);
@@ -1248,8 +1248,8 @@ MathJax.Hub.Register.StartupHook("TeX Jax Ready", function () {
         scriptlevel:0
       }));
       this.Push(units.mml());
-    },	
-	
+    },
+
 	num: function (name) {
       var options = SIunitxOptions(ParseOptions(this.GetBrackets(name,'')));
       var num = this.GetArgument(name);
@@ -1286,12 +1286,12 @@ MathJax.Hub.Register.StartupHook("TeX Jax Ready", function () {
         }
       }
     },
-	
+
 	numlist: function (name) {
       var options = SIunitxOptions(ParseOptions(this.GetBrackets(name,'')));
       var num = this.GetArgument(name);
       this.Push(SINumberListParser(num,options,this.stack.env).mml());
-    },	
+    },
 
 	numrange: function (name) {
       var options = SIunitxOptions(ParseOptions(this.GetBrackets(name,'')));
@@ -1301,11 +1301,11 @@ MathJax.Hub.Register.StartupHook("TeX Jax Ready", function () {
       this.Push(options['range-phrase']);
       this.Push(SINumberParser(num2,options,this.stack.env).mml());
     }
-	
+
   };
   MathJax.Extension["TeX/siunitx"].SIunitxCommands = SIunitxCommands;
-  
-  
+
+
   /***************************************************************************/
 
   TEX.Definitions.Add({
@@ -1324,7 +1324,7 @@ MathJax.Hub.Register.StartupHook("TeX Jax Ready", function () {
       numrange:   'SIunitx',
     }
   },null,true);
-    
+
   TEX.Parse.Augment({
 
     //
@@ -1333,9 +1333,9 @@ MathJax.Hub.Register.StartupHook("TeX Jax Ready", function () {
     SIunitx: function (name) {
       SIunitxCommands[name.slice(1)].call(this,name)
     }
-    
+
   });
-  
+
   //
   //  Indicate that the extension is ready
   //
