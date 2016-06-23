@@ -91,11 +91,11 @@ MathJax.Hub.Register.StartupHook("TeX Jax Ready", function () {
   var SwitchChoice = Choice.Subclass({
     Init: function(){
       this._switchchoice = arguments[1];
-      Choice.Init.apply(this,arguments);
+      Choice.prototype.Init.apply(this,arguments);
     },
     Validate: function(obj,name,val){
       if(val === undefined) val=this._switchchoice;
-      return Choice.Validate.call(this,obj,name,val);
+      return Choice.prototype.Validate.call(this,obj,name,val);
     }
   });
   var Integer = ValidationBase.Subclass({
@@ -168,7 +168,7 @@ MathJax.Hub.Register.StartupHook("TeX Jax Ready", function () {
     },
     Set: function(prop,value){
       if(this._options[prop] === undefined){
-        throw ValidationError(this,prop,undefined,value,"does not exist");
+        throw TypeError(this.constructor+' has no attribute named "'+prop+'"');
       } else {
         this[prop] = value;
       }
@@ -270,7 +270,7 @@ MathJax.Hub.Register.StartupHook("TeX Jax Ready", function () {
     'minimum-integer-digits': Integer(),
     'omit-uncertainty': Switch(),
     'retain-explicit-plus': Switch(),
-    'retain-unit-mantissa': Switch(true),
+    'retain-unity-mantissa': Switch(true),
     'retain-zero-exponent': Switch(),
     'round-half': Choice('up','even'),
     'round-integer-to-decimal': Switch(),
