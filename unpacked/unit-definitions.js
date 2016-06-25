@@ -27,9 +27,6 @@ define(function() {
   var MML = MathJax.ElementJax.mml;
 
   var UNITSMACROS = exports.UNITSMACROS = {
-    // special units
-    percent: {name: 'percent', symbol: '%', category: 'non-unit'},
-
     // powers
     per: ['Per', -1],
     square: ['PowerPfx', 2],
@@ -186,6 +183,15 @@ define(function() {
     nauticmile: [';'],
     neper: ['Np'],
   })));
+
+  // special units
+  SIUnits.percent = {
+    name: 'percent',
+    symbol: '%',
+    category: 'non-unit',
+    abbrev: undefined
+  };
+
 
   for (var unit in SIUnits) {
     unit = SIUnits[unit];
