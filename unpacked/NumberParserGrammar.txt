@@ -184,7 +184,7 @@ start = _ prod:Product _ {
         	postproc(num.re);
         	postproc(num.im,false,true);
         	postproc(num.exp,true);
-            // TODO: retain-unit-mantissa retain-zero-exponent
+            // TODO: retain-unity-mantissa retain-zero-exponent
             num = fmtComplExp(num);
         	return num;
         });
@@ -284,4 +284,4 @@ Integer "integer"
 Digits = [0-9]+ {return text();}
 
 _ "whitespace"
-  = [ \t\n\r]*            // TODO: retain-unit-mantissa retain-zero-exponent
+  = [ \t\n\r]*            // TODO: retain-unity-mantissa retain-zero-exponent

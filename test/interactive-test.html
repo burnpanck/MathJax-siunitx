@@ -9,10 +9,17 @@
 <script type="text/x-mathjax-config">
   MathJax.Hub.Config({
     tex2jax: {inlineMath: [["$","$"],["\\(","\\)"]]},
-	errorSettings: {message: undefined},
-    TeX: { extensions: ["[Contrib]/siunitx/unpacked/siunitx.js", "color.js"] }
+  	errorSettings: {message: undefined},
+    TeX: { extensions: [
+      "[Contrib]/siunitx/unpacked/siunitx.js",
+      "color.js"
+    ] }
   });
   MathJax.Ajax.config.path['Contrib']  = '../..';
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.2.0/require.min.js"></script>
+<script>
+requirejs.config({baseUrl:'../unpacked'});
 </script>
 <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/unpacked/MathJax.js?config=TeX-MML-AM_HTMLorMML"></script>
 <script type="text/javascript">
@@ -25,6 +32,7 @@ function vid(id){
 }
 var srcfun = {
   raw: function(){return vid('in-raw');},
+    ang: function(){return '\\ang['+vid('in-ang-opt')+']{'+vid('in-ang')+'}';},
     si: function(){return '\\si['+vid('in-si-opt')+']{'+vid('in-si')+'}';},
     SI2: function(){return '\\SI['+vid('in-SI2-opt')+']{'+vid('in-SI2-num')+'}{'+vid('in-SI2-unit')+'}';}
 };
@@ -38,6 +46,11 @@ function process(name){
     MathJax.Hub.Queue(["Typeset",MathJax.Hub,"out-"+name]);
 }
 function newSVG(req, name) {
+    var type = req.getResponseHeader('Content-Type');
+    if (type!= 'image/svg+xml'){
+        console.log('Ignoring answer with Content-Type '+type);
+        return;
+    }
     var elem = document.getElementById('ref-'+name);
     elem.innerHTML = req.responseText;
 }
@@ -94,6 +107,13 @@ function xml_http_post(url, data, callback, id) {
         <td><div id="out-si">$\si{\mm}$</div></td>
         <td><pre id="pre-si">$\si{\mm}$</pre></td>
         <td><div id="ref-si"></div></td>
+    </tr>
+    <tr>
+        <td>$\ang[<input type="text" id="in-ang-opt" data-target="ang" value="" onchange="ch(this)"/>]
+            {<input type="text" id="in-ang" data-target="ang" value="" onchange="ch(this)"/>}$</td>
+        <td><div id="out-ang"></div></td>
+        <td><pre id="pre-ang"></pre></td>
+        <td><div id="ref-ang"></div></td>
     </tr>
     <tr>
         <td>
