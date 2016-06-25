@@ -27,7 +27,7 @@ MathJax.Extension["TeX/siunitx"] = {
 
 MathJax.Hub.Register.StartupHook("TeX Jax Ready", function () {
 
-  requirejs(['siunitx-commands'], function(SIunitxCommands) {
+  function RegisterCommands(SIunitxCommands) {
     var TEX = MathJax.InputJax.TeX;
 
     TEX.Definitions.Add({
@@ -62,7 +62,13 @@ MathJax.Hub.Register.StartupHook("TeX Jax Ready", function () {
     //  Indicate that the extension is ready
     //
     MathJax.Hub.Startup.signal.Post("TeX siunitx Ready");
-  });
+  }
+
+  var cb = MathJax.Callback(RegisterCommands);
+
+  requirejs(['siunitx-commands'], cb);
+
+  return cb;
 });
 
 MathJax.Ajax.loadComplete("[Contrib]/siunitx/unpacked/siunitx.js");
