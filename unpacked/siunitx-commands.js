@@ -200,5 +200,39 @@ define(
 
   };
 
+  // ------ regsiter the commands with MathJax
+  TEX.Definitions.Add({
+    macros: {
+      //
+      //  Set up the macros for SI units
+      //
+      sisetup: 'SIunitx',
+      si: 'SIunitx',
+      SI: 'SIunitx',
+      SIlist: 'SIunitx',
+      SIrange: 'SIunitx',
+      num: 'SIunitx',
+      ang: 'SIunitx',
+      numlist: 'SIunitx',
+      numrange: 'SIunitx',
+    }
+  }, null, true);
+
+  TEX.Parse.Augment({
+
+    //
+    //  Implements \SI and friends
+    //
+    SIunitx: function (name) {
+      SIunitxCommands[name.slice(1)].call(this, name)
+    }
+
+  });
+
+  //
+  //  Indicate that the extension is ready
+  //
+  MathJax.Hub.Startup.signal.Post("TeX siunitx Ready");
+
   return SIunitxCommands;
 });

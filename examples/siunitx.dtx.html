@@ -12,17 +12,14 @@
     tex2jax: {inlineMath: [["$","$"],["\\(","\\)"]]},
 //  	errorSettings: {message: undefined},
     TeX: { extensions: [
-      "[Contrib]/siunitx/unpacked/siunitx.js",
+      "[Contrib]/siunitx/siunitx.js",
       "color.js"
     ] }
   });
   MathJax.Ajax.config.path['Contrib']  = '../..';
 </script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.2.0/require.min.js"></script>
-  <script>
-  requirejs.config({baseUrl:'../unpacked'});
-  </script>
-  <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/unpacked/MathJax.js?config=TeX-MML-AM_HTMLorMML"></script>
+  <script src="http://cdn.mathjax.org/mathjax/latest/unpacked/MathJax.js?config=TeX-MML-AM_HTMLorMML&delayStartupUntil=configured"></script>
+  <script src="select-siunitx-version.js"></script>
   <style type="text/css">
    table.unit-listing pre {
     margin: 0;

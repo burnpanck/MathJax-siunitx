@@ -29,9 +29,9 @@ Then add the extension to your configuration like any other third party extensio
 
 ### Example
 
-We have an [example page](https://github.com/burnpanck/MathJax-third-party-extensions/blob/add-siunitx-tex-extension/siunitx/sample-siunitx.html)
-([see it live](http://rawgit.com/burnpanck/MathJax-third-party-extensions/add-siunitx-tex-extension/siunitx/sample-siunitx.html))
-and a [listing of extracted code samples from the siunitx documentation](https://github.com/burnpanck/MathJax-third-party-extensions/blob/add-siunitx-tex-extension/siunitx/test/siunitx.dtx.html)
-([live here](http://rawgit.com/burnpanck/MathJax-third-party-extensions/add-siunitx-tex-extension/siunitx/test/siunitx.dtx.html))
+We have a [listing of extracted code samples from the siunitx documentation](https://github.com/burnpanck/MathJax-third-party-extensions/blob/add-siunitx-tex-extension/siunitx/test/siunitx.dtx.html)
+([see it live](http://rawgit.com/burnpanck/MathJax-third-party-extensions/add-siunitx-tex-extension/siunitx/test/siunitx.dtx.html))
 that highlight a number of uses of this extension and provides static images rendered with `pdflatex`
 and the `siunitx` package for comparison.
+For debugging purposes, you may append `?unpacked` or `?modular` to the URL, making the page use the combined but not minified,
+or even the modular original sources instead of the production level minified version of the extension.

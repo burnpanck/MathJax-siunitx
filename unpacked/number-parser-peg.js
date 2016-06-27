@@ -37,24 +37,15 @@ define([], function () { return (function() {
         peg$startRuleIndex   = 0,
 
         peg$consts = [
-          function(prod) {
-          	prod.forEach(function(fac){
-              	var nums = [fac.num,fac.denom];
-                  nums = nums.map(function(num){
-                  	if(num===null)return num;
-                      // TODO: scientific-notation/fixed-exponent
-                  	postproc(num.re);
-                  	postproc(num.im,false,true);
-                  	postproc(num.exp,true);
-                      // TODO: retain-unity-mantissa retain-zero-exponent
-                      num = fmtComplExp(num);
-                  	return num;
-                  });
-                  fac.num = nums[0];
-                  fac.denom = nums[1];
-              });
-          	return prod;
-          },
+          function(prod) {return prod;},
+          { type: "other", description: "complex root" },
+          function(s) {return options['input-complex-roots'].indexOf(s)>=0;},
+          function(s) {return s;},
+          { type: "other", description: "decimal marker" },
+          function(s) {return options['input-decimal-markers'].indexOf(s)>=0;},
+          { type: "other", description: "exponent marker" },
+          function(s) {return options['input-exponent-markers'].indexOf(s)>=0;},
+          { type: "any", description: "any character" },
           function(head, tail) {
           	var ret=[head];
               tail.forEach(function(f){ret.push(f[1]);});
@@ -88,8 +79,8 @@ define([], function () { return (function() {
           function(sign, num, uncert) {
           	var n = num.frac.length;
               var m = uncert.frac.length;
-              num.frac = num.frac + '0'.repeat(Math.max(0,m-n));
-              uncert.frac = uncert.frac + '0'.repeat(Math.max(0,n-m));
+              num.frac = num.frac + repeat('0',Math.max(0,m-n));
+              uncert.frac = uncert.frac + repeat('0',Math.max(0,n-m));
               num.uncert = uncert.int + uncert.frac;
               num.sign = sign && sign[0];
           	return {re:num};
@@ -100,11 +91,6 @@ define([], function () { return (function() {
           function(root, num) {
           	num.root = root; return num;
           },
-          { type: "other", description: "complexRoot" },
-          /^[ij]/,
-          { type: "class", value: "[ij]", description: "[ij]" },
-          /^[eEdD]/,
-          { type: "class", value: "[eEdD]", description: "[eEdD]" },
           function(sign, exponent) {
           	exponent.sign = sign && sign[0];
               return exponent;
@@ -150,8 +136,6 @@ define([], function () { return (function() {
           "\\ge",
           { type: "literal", value: "\\ge", description: "\"\\\\ge\"" },
           function() {return '\\ge';},
-          /^[.,]/,
-          { type: "class", value: "[.,]", description: "[.,]" },
           "(",
           { type: "literal", value: "(", description: "\"(\"" },
           ")",
@@ -181,37 +165,40 @@ define([], function () { return (function() {
         ],
 
         peg$bytecode = [
-          peg$decode("%;>/:#;!/1$;>/($8#: #!!)(#'#(\"'#&'#"),
-          peg$decode("%;#/_#$%;>/,#;\"/#$+\")(\"'#&'#06*%;>/,#;\"/#$+\")(\"'#&'#&/)$8\":!\"\"! )(\"'#&'#"),
-          peg$decode("%2\"\"\"6\"7#/:#;>/1$;#/($8#:$#! )(#'#(\"'#&'#"),
-          peg$decode("%;$/b#%;>/D#2%\"\"6%7&/5$;>/,$;$/#$+$)($'#(#'#(\"'#&'#.\" &\"/)$8\":'\"\"! )(\"'#&'#"),
-          peg$decode("%%;6/,#;>/#$+\")(\"'#&'#.\" &\"/T#;%/K$%;>/,#;+/#$+\")(\"'#&'#.\" &\"/*$8#:(##\"! )(#'#(\"'#&'#"),
-          peg$decode("%%%;//,#;>/#$+\")(\"'#&'#.\" &\"/,#;8/#$+\")(\"'#&'#/\\#%;>/>#;//5$;>/,$;'/#$+$)($'#(#'#(\"'#&'#.\" &\"/)$8\":)\"\"! )(\"'#&'#"),
-          peg$decode("%%;//,#;>/#$+\")(\"'#&'#.\" &\"/W#;9/N$;>/E$;-/<$;>/3$;9/*$8&:*&#%$ )(&'#(%'#($'#(#'#(\"'#&'#"),
-          peg$decode(";(.# &;)"),
-          peg$decode("%;8/;#;>/2$;*/)$8#:+#\"\" )(#'#(\"'#&'#"),
-          peg$decode("%;*/;#;>/2$;8/)$8#:,#\"\" )(#'#(\"'#&'#"),
-          peg$decode("<4.\"\"5!7/=.\" 7-"),
-          peg$decode("%40\"\"5!71/\\#;>/S$%;,/,#;>/#$+\")(\"'#&'#.\" &\"/2$;9/)$8$:2$\"! )($'#(#'#(\"'#&'#"),
-          peg$decode("%43\"\"5!74/& 8!:5! )"),
-          peg$decode("%26\"\"6677.) &28\"\"6879/& 8!::! )"),
-          peg$decode("%2;\"\"6;7<.) &2=\"\"6=7>/& 8!:?! )"),
-          peg$decode(";-.) &;..# &;,"),
-          peg$decode("%2@\"\"6@7A.) &2B\"\"6B7C/& 8!:D! )"),
-          peg$decode("%2E\"\"6E7F/& 8!:G! )"),
-          peg$decode("%2H\"\"6H7I.G &%2J\"\"6J7K/7#2L\"\"6L7M.\" &\"/#$+\")(\"'#&'#/& 8!:N! )"),
-          peg$decode("%2O\"\"6O7P.) &2Q\"\"6Q7R/& 8!:S! )"),
-          peg$decode("%2T\"\"6T7U/& 8!:V! )"),
-          peg$decode("%2W\"\"6W7X.G &%2Y\"\"6Y7Z/7#2L\"\"6L7M.\" &\"/#$+\")(\"'#&'#/& 8!:[! )"),
-          peg$decode(";0.; &;2.5 &;1./ &;3.) &;5.# &;4"),
-          peg$decode("4\\\"\"5!7]"),
-          peg$decode("%;9/z#%;>/\\#2^\"\"6^7_/M$;>/D$;=/;$;>/2$2`\"\"6`7a/#$+&)(&'#(%'#($'#(#'#(\"'#&'#.\" &\"/)$8\":b\"\"! )(\"'#&'#"),
-          peg$decode("<;:.# &;;=.\" 7c"),
-          peg$decode("%;=/k#%;>/M#;7/D$%;>/,#;=/#$+\")(\"'#&'#.\" &\"/#$+#)(#'#(\"'#&'#.\" &\"/)$8\":d\"\"! )(\"'#&'#"),
-          peg$decode("%;7/;#;>/2$;=/)$8#:e#\"\" )(#'#(\"'#&'#"),
-          peg$decode("<%;=/& 8!:g! )=.\" 7f"),
-          peg$decode("%$4h\"\"5!7i/,#0)*4h\"\"5!7i&&&#/& 8!:j! )"),
-          peg$decode("<$4l\"\"5!7m0)*4l\"\"5!7m&=.\" 7k")
+          peg$decode("%;A/:#;%/1$;A/($8#: #!!)(#'#(\"'#&'#"),
+          peg$decode("<%;$/<#9:\" ! -\"\"&!&#/($8\":#\"!!)(\"'#&'#=.\" 7!"),
+          peg$decode("<%;$/<#9:% ! -\"\"&!&#/($8\":#\"!!)(\"'#&'#=.\" 7$"),
+          peg$decode("<%;$/<#9:' ! -\"\"&!&#/($8\":#\"!!)(\"'#&'#=.\" 7&"),
+          peg$decode("1\"\"5!7("),
+          peg$decode("%;'/_#$%;A/,#;&/#$+\")(\"'#&'#06*%;A/,#;&/#$+\")(\"'#&'#&/)$8\":)\"\"! )(\"'#&'#"),
+          peg$decode("%2*\"\"6*7+/:#;A/1$;'/($8#:,#! )(#'#(\"'#&'#"),
+          peg$decode("%;(/b#%;A/D#2-\"\"6-7./5$;A/,$;(/#$+$)($'#(#'#(\"'#&'#.\" &\"/)$8\":/\"\"! )(\"'#&'#"),
+          peg$decode("%%;:/,#;A/#$+\")(\"'#&'#.\" &\"/T#;)/K$%;A/,#;//#$+\")(\"'#&'#.\" &\"/*$8#:0##\"! )(#'#(\"'#&'#"),
+          peg$decode(";+.# &;*"),
+          peg$decode("%%%;3/,#;A/#$+\")(\"'#&'#.\" &\"/,#;;/#$+\")(\"'#&'#/\\#%;A/>#;3/5$;A/,$;,/#$+$)($'#(#'#(\"'#&'#.\" &\"/)$8\":1\"\"! )(\"'#&'#"),
+          peg$decode("%%;3/,#;A/#$+\")(\"'#&'#.\" &\"/W#;</N$;A/E$;1/<$;A/3$;</*$8&:2&#%$ )(&'#(%'#($'#(#'#(\"'#&'#"),
+          peg$decode(";-.# &;."),
+          peg$decode("%;;/;#;A/2$;!/)$8#:3#\"\" )(#'#(\"'#&'#"),
+          peg$decode("%;!/;#;A/2$;;/)$8#:4#\"\" )(#'#(\"'#&'#"),
+          peg$decode("%;#/\\#;A/S$%;0/,#;A/#$+\")(\"'#&'#.\" &\"/2$;</)$8$:5$\"! )($'#(#'#(\"'#&'#"),
+          peg$decode("%46\"\"5!77/& 8!:8! )"),
+          peg$decode("%29\"\"697:.) &2;\"\"6;7</& 8!:=! )"),
+          peg$decode("%2>\"\"6>7?.) &2@\"\"6@7A/& 8!:B! )"),
+          peg$decode(";1.) &;2.# &;0"),
+          peg$decode("%2C\"\"6C7D.) &2E\"\"6E7F/& 8!:G! )"),
+          peg$decode("%2H\"\"6H7I/& 8!:J! )"),
+          peg$decode("%2K\"\"6K7L.G &%2M\"\"6M7N/7#2O\"\"6O7P.\" &\"/#$+\")(\"'#&'#/& 8!:Q! )"),
+          peg$decode("%2R\"\"6R7S.) &2T\"\"6T7U/& 8!:V! )"),
+          peg$decode("%2W\"\"6W7X/& 8!:Y! )"),
+          peg$decode("%2Z\"\"6Z7[.G &%2\\\"\"6\\7]/7#2O\"\"6O7P.\" &\"/#$+\")(\"'#&'#/& 8!:^! )"),
+          peg$decode(";4.; &;6.5 &;5./ &;7.) &;9.# &;8"),
+          peg$decode("%;</z#%;A/\\#2_\"\"6_7`/M$;A/D$;@/;$;A/2$2a\"\"6a7b/#$+&)(&'#(%'#($'#(#'#(\"'#&'#.\" &\"/)$8\":c\"\"! )(\"'#&'#"),
+          peg$decode("<;=.# &;>=.\" 7d"),
+          peg$decode("%;@/k#%;A/M#;\"/D$%;A/,#;@/#$+\")(\"'#&'#.\" &\"/#$+#)(#'#(\"'#&'#.\" &\"/)$8\":e\"\"! )(\"'#&'#"),
+          peg$decode("%;\"/;#;A/2$;@/)$8#:f#\"\" )(#'#(\"'#&'#"),
+          peg$decode("<%;@/& 8!:h! )=.\" 7g"),
+          peg$decode("%$4i\"\"5!7j/,#0)*4i\"\"5!7j&&&#/& 8!:k! )"),
+          peg$decode("<$4m\"\"5!7n0)*4m\"\"5!7n&=.\" 7l")
         ],
 
         peg$currPos          = 0,
@@ -674,179 +661,26 @@ define([], function () { return (function() {
     }
 
 
-    function incIntStr(str){
-    	var m = str.length;
-        var k=m-1;
-        while(k>=0 && str[k]==='9') k--;
-        if(k>=0){
-        	str = str.slice(0,k)
-        		+ '123456789'[parseInt(str[k])]
-        		+ '0'.repeat(m-k-1);
-        } else str = '1' + '0'.repeat(m);
-        return str;
+    // These are mainly here to experiment with the parser in peg's online playground
+    var default_options = {
+        'input-complex-roots': 'ij',
+        'input-decimal-markers': '.,',
+        'input-exponent-markers': 'eEdD',
+    };
+
+    // var options = default_options;
+
+
+
+    function repeat(pattern, count) {
+        if (count < 1) return '';
+        var result = '';
+        while (count > 1) {
+            if (count & 1) result += pattern;
+            count >>= 1, pattern += pattern;
+        }
+        return result + pattern;
     }
-    function postproc(num,no_rounding,retain_plus){
-    	if(num===null)return;
-    	var n;
-        // -- explicit signs
-        if(num.sign === null)
-        	num.sign = options['explicit-sign'] || null;
-        else if(!retain_plus && num.sign === '+' && !options['retain-explicit-plus'])
-        	num.sign = null;
-        // -- remove leading zeros
-        num.int = num.int.replace(/^00*/,'')
-        // -- missing zeros
-    	if(!num.int) //&& options['add-integer-zero']
-        	num.int = '0';
-        if(num.sep && !num.frac) //&& options['add-decimal-zero']
-        	num.frac = '0';
-        // -- minimum integer digits
-        n = options['minimum-integer-digits'] - num.int.length
-        if(n>0)
-        	num.int = '0'.repeat(n) + num.int;
-        // -- rounding
-        // TODO: disable rounding when non-digits present in number
-    	if(!no_rounding && num.uncert===null){ //&& options['round-mode']!=='off'
-            if(true){//options['round-mode']==='figures')
-            	n = num.int.replace(/^00*/,'').length;
-                if(n)
-                	n += num.frac.length;
-                else
-                	n = num.frac.replace(/^00*/,'').length;
-            } else
-            	n = num.frac.length;  // round-mode = places
-            n -= 3; //options['round-precision'];
-            switch(Math.sign(n)){
-            case 1:
-            	// Too many digits
-                var comb = num.int + num.frac;
-                var dir = Math.sign(parseInt(comb[comb.length-n])-5);
-                if(!dir && n>1 && parseInt(comb.slice(1-n)))
-                	dir = 1;
-                comb = comb.slice(0,-n);
-                if(!dir){
-                	// exactly half
-                    switch(options['round-half']){
-                    case 'up': // actually: up in magnitude
-                    	dir = 1;
-                        break;
-                    default:
-                    case 'even':
-                    	dir = parseInt(comb[comb.length-1])&1 ? 1 : -1;
-                        break;
-                    }
-                }
-                if(dir===1) comb = incIntStr(comb);
-                if(n<num.frac.length){
-                	// decimal result
-                    num.int = comb.slice(0,n-num.frac.length);
-                    num.frac = comb.slice(n-num.frac.length);
-                } else {
-                	// integer result
-                    num.int = comb + '0'.repeat(n-num.frac.length);
-                    num.sep = null;
-                    num.frac = '';
-                }
-                break
-            case -1:
-            	// Too few digits
-                if(num.sep || options['round-integer-to-decimal']){
-                	num.sep = num.sep || '.';
-                	num.frac += '0'.repeat(-n);
-                }
-                break
-            };
-        };
-    	if(
-        	false //options['zero-decimal-to-integer']
-            && !(num.frac && parseInt(num.frac))
-        ) {num.frac=null;num.sep=null;};
-    };
-    function fmtDecimal(num){
-      var integer = num.int;
-      var fractional = num.frac;
-
-      var gd = options['group-digits'];
-      var md = options['group-minimum-digits'];
-      var gs = '{' + options['group-separator'] + '}';
-      var dm = '{' + (
-      	options['copy-decimal-marker'] || true
-        ? num.sep
-        : options['output-decimal-marker']
-      ) + '}';
-
-      var sign = (num.sign || '');
-
-    //  integer = integer || '0';
-      var l = integer.length;
-      if(l>=md && (gd==='true' || gd==='integer')){
-        l-=3;
-        for(;l>0;l-=3){
-    	    integer = integer.slice(0,l) + gs + integer.slice(l);
-        }
-      }
-
-      if(!num.sep)
-    	  return sign + integer;
-
-      l = fractional.length;
-      if(l>=md && (gd==='true' || gd==='decimal')){
-        l-=1+(l-1)%3;
-        for(;l>0;l-=3){
-    	    fractional = fractional.slice(0,l) + gs + fractional.slice(l);
-        }
-      }
-
-      return (
-        sign
-      	+ integer
-        + dm
-        + fractional
-      );
-    };
-
-    function fmtComplExp(num){
-    	var ob='',cb='';
-        if(num.exp && options['bracket-numbers']){
-        	ob = (options['open-bracket'] || '(') + ' ';
-    		cb = ' ' + (options['close-bracket'] || ')');
-        }
-
-    	var re = num.re && fmtDecimal(num.re);
-        var im = null;
-        if(num.im){
-        	var cr = (
-              options['copy-complex-root'] || true
-              ? num.im.root
-              : options['output-complex-root']
-            );
-        	im = fmtDecimal(num.im);
-            if(options['complex-root-position'] === 'before-number')
-            	im = cr+im;
-            else
-            	im = im+cr;
-        }
-        var ret = num.rel ? num.rel+' ' : '';
-        if(re !== null) {
-        	if(im === null) ret += re;
-            else ret += ob + re + ' ' + im + cb;
-        } else if(im !== null) ret += im;
-        else error('neither re nor im given'); // should never happen
-
-        if(num.exp){
-        	var exp = fmtDecimal(num.exp);
-        	var oem = options['output-exponent-marker'];
-        	if(oem)
-            	ret += ' ' + oem + ' ' + exp;
-            else
-            	ret += (
-                	' ' + (options['exponent-product'] || '\\times')
-                    + ' ' + (options['exponent-base'] || '10')
-                    + '^{' + exp + '}'
-                );
-        }
-        return ret;
-    };
 
 
 
