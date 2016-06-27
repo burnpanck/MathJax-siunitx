@@ -12,14 +12,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "git://github.com/burnpanck/MathJax-third-party-extension.git"
+    "url": "git://github.com/burnpanck/MathJax-third-party-extension.git#add-siunitx-tex-extension"
   },
   "author": "Yves Delley",
   "license": "Apache-2.0",
   "bugs": {
     "url": "https://github.com/burnpanck/MathJax-third-party-extension/issues"
   },
-  "homepage": "https://github.com/burnpanck/MathJax-third-party-extension/siunitx#readme",
+  "homepage": "https://github.com/burnpanck/MathJax-third-party-extension/tree/add-siunitx-tex-extension/siunitx",
   "private": true,
   "devDependencies": {
     "amdclean": "^2.7.0",
@@ -31,7 +31,6 @@
     "grunt-mocha-test": "^0.12.7",
     "grunt-peg": "^2.0.1",
     "mocha": "^2.5.3",
-    "pegjs": "^0.9.0",
     "requirejs": "^2.2.0"
   }
 }
