@@ -1,4 +1,16 @@
 {
+var default_options = {
+	'explicit-sign': null,  // or an explicit sign?
+    'retain-explicit-plus': false,
+    'add-integer-zero': true,
+    'add-decimal-zero': true,
+    'minimum-integer-digits': 0,
+
+    'bracket-numbers': true,
+};
+
+var options = default_options;
+
 function incIntStr(str){
 	var m = str.length;
     var k=m-1;
@@ -21,9 +33,9 @@ function postproc(num,no_rounding,retain_plus){
     // -- remove leading zeros
     num.int = num.int.replace(/^00*/,'')
     // -- missing zeros
-	if(!num.int) //&& options['add-integer-zero']
+	if(!num.int && options['add-integer-zero'])
     	num.int = '0';
-    if(num.sep && !num.frac) //&& options['add-decimal-zero']
+    if(num.sep && !num.frac && options['add-decimal-zero'])
     	num.frac = '0';
     // -- minimum integer digits
     n = options['minimum-integer-digits'] - num.int.length
@@ -208,7 +220,7 @@ FullNum = rel:(Rel _)? mantissa:ComplexOrRealWUncert exp:(_ Exponent)? {
     mantissa.rel = rel && rel[0];
 	return mantissa;
 }
-ComplexOrRealWUncert = ComplexNum // / RealWUncert // TODO: this does not seem to work (tries to match ComplexNum even with '1 +- 1')
+ComplexOrRealWUncert = RealWUncert / ComplexNum // / RealWUncert // TODO: this does not seem to work (tries to match ComplexNum even with '1 +- 1')
 ComplexNum = re:((DblSign _)? DecimalWUncert) im:(_ DblSign _ ImaginaryNum)? {
 	var res = re[0] && re[0][0];
     re = re[1];

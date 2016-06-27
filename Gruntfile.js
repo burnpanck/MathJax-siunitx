@@ -1,6 +1,18 @@
 module.exports = function(grunt) {
   grunt.initConfig({
     pkg: grunt.file.readJSON('package.json'),
+    peg: {
+      numberparser : {
+        src: "unpacked/number-parser.peg",
+        dest: "unpacked/number-parser-peg.js",
+        options: {
+          optimize: 'size',
+          wrapper: function (src, parser) {
+            return 'define([], function () { return ' + parser + '; });';
+          }
+        }
+      }
+    },
     requirejs: {
       js: {
         options: {
@@ -21,9 +33,20 @@ module.exports = function(grunt) {
           }
         }
       }
+    },
+    mochaTest: {
+      test: {
+        options: {
+          reporter: 'spec'
+        },
+        src: ['test/**/*.js']
+      }
     }
   });
+  grunt.loadNpmTasks('grunt-peg');
   grunt.loadNpmTasks('grunt-contrib-requirejs');
-  grunt.registerTask('build', ['requirejs:js']);
-  grunt.registerTask('default', ['build']);
+  grunt.loadNpmTasks('grunt-mocha-test');
+  grunt.registerTask('build', ['peg','requirejs:js']);
+  grunt.registerTask('test', ['mochaTest']);
+  grunt.registerTask('default', ['build','test']);
 };
