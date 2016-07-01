@@ -22,6 +22,8 @@
  */
 
 define(['./keyvalue-option-validation'],function(KEYVAL) {
+  'use strict';
+  
   var ConfigData = KEYVAL.ConfigData;
   var Switch = KEYVAL.Switch;
   var SwitchChoice = KEYVAL.SwitchChoice;

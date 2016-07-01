@@ -22,6 +22,8 @@
  */
 
 define(['./siunitx-options-definition'],function(SIunitxOptions) {
+  'use strict';
+  
   var exports = {};
 
   var TEX = MathJax.InputJax.TeX;

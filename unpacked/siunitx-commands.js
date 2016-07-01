@@ -23,9 +23,11 @@
  */
 
 define(
-  ['./siunitx-options-definition','./unit-definitions','./unit-parser','./number-parser-regex'],
+  ['./siunitx-options-definition','./unit-definitions','./unit-parser','./number-parser'],
   function(SIunitxOptions, UNITDEFS, SIUnitParser, NUMBERPARSER)
 {
+  'use strict';
+
   var TEX = MathJax.InputJax.TeX;
   var MML = MathJax.ElementJax.mml;
 
@@ -58,7 +60,7 @@ define(
           scriptlevel: 0
         }));
       }
-      this.Push(SINumberParser(num, options, this.stack.env).mml());
+      this.Push(SINumberParser(num, options, this.stack.env).mml()[0].num);
       this.Push(MML.mspace().With({
         width: MML.LENGTH.MEDIUMMATHSPACE,
         mathsize: MML.SIZE.NORMAL,

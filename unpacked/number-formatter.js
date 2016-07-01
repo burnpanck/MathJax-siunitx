@@ -3,6 +3,35 @@
  */
 
 define([],function(){
+    'use strict';
+
+    // this is mainly here for documentation purposes
+    var default_options = {
+        'explicit-sign': null,   // which sign to place explicitly if one is missing
+        'retain-explicit-plus': false,
+        'add-integer-zero': false,
+        'add-decimal-zero': false,
+        'minimum-integer-digits': 0,
+        'round-mode': 'off', // or 'figures', 'places'
+        'round-precision': 3,
+        'round-half': 'even',    // or 'up',
+        'round-integer-to-decimal': false,
+        'zero-decimal-to-integer': false,
+        'group-digits': null, // or 'true','integer','decimal'
+        'group-minimum-digits': 3,
+        'group-separator': '\\,',
+        'copy-decimal-marker': true,
+        'output-decimal-marker':'.',
+        'bracket-numbers':true,
+        'open-bracket':'(',
+        'close-bracket':')',
+        'copy-complex-root':true,
+        'output-complex-root':'i',
+        'complex-root-position':'before-number',
+        'output-exponent-marker':false,  // or an explicit marker, e.g. 'e'
+        'exponent-product':'\\times',
+        'exponent-base':'10'
+    };
 
     function incIntStr(str){
         var m = str.length;
@@ -15,12 +44,13 @@ define([],function(){
         } else str = '1' + '0'.repeat(m);
         return str;
     }
-    function postproc(options,num,no_rounding,retain_plus){
+    function postprocDecimal(options,num,no_rounding,retain_plus){
+        console.log(num);
         if(num===null)return;
         var n;
         // -- explicit signs
         if(num.sign === null)
-            num.sign = options['explicit-sign'] || null;
+            num.sign = options['explicit-sign'];
         else if(!retain_plus && num.sign === '+' && !options['retain-explicit-plus'])
             num.sign = null;
         // -- remove leading zeros
@@ -36,8 +66,8 @@ define([],function(){
             num.int = '0'.repeat(n) + num.int;
         // -- rounding
         // TODO: disable rounding when non-digits present in number
-        if(!no_rounding && num.uncert===null){ //&& options['round-mode']!=='off'
-            if(true){//options['round-mode']==='figures')
+        if(!no_rounding && num.uncert===null && options['round-mode']!=='off'){
+            if(options['round-mode']==='figures') {
                 n = num.int.replace(/^00*/,'').length;
                 if(n)
                     n += num.frac.length;
@@ -45,7 +75,7 @@ define([],function(){
                     n = num.frac.replace(/^00*/,'').length;
             } else
                 n = num.frac.length;  // round-mode = places
-            n -= 3; //options['round-precision'];
+            n -= options['round-precision'];
             switch(Math.sign(n)){
                 case 1:
                     // Too many digits
@@ -81,17 +111,34 @@ define([],function(){
                 case -1:
                     // Too few digits
                     if(num.sep || options['round-integer-to-decimal']){
-                        num.sep = num.sep || '.';
+                        num.sep = num.sep || options['output-decimal-marker'];
                         num.frac += '0'.repeat(-n);
                     }
                     break
             };
         };
         if(
-            false //options['zero-decimal-to-integer']
+            options['zero-decimal-to-integer']
             && !(num.frac && parseInt(num.frac))
         ) {num.frac=null;num.sep=null;};
     };
+    function postprocComplExp(options,num){
+        postprocDecimal(options,num.re);
+        postprocDecimal(options,num.im,false,true);
+        postprocDecimal(options,num.exp,true);
+    };
+
+    function postprocAll(options,nums){
+        nums.forEach(function(quot){
+            [quot.num, quot.denom].forEach(function(num){
+                if(!num) return;
+                postprocComplExp(options,num);
+            })
+        });
+    };
+
+
+
     function fmtDecimal(options,num){
         var integer = num.int;
         var fractional = num.frac;
@@ -100,7 +147,7 @@ define([],function(){
         var md = options['group-minimum-digits'];
         var gs = '{' + options['group-separator'] + '}';
         var dm = '{' + (
-                options['copy-decimal-marker'] || true
+                options['copy-decimal-marker']
                     ? num.sep
                     : options['output-decimal-marker']
             ) + '}';
@@ -142,15 +189,15 @@ define([],function(){
             cb = ' ' + (options['close-bracket'] || ')');
         }
 
-        var re = num.re && fmtDecimal(num.re);
+        var re = num.re && fmtDecimal(options,num.re);
         var im = null;
         if(num.im){
             var cr = (
-                options['copy-complex-root'] || true
+                options['copy-complex-root']
                     ? num.im.root
                     : options['output-complex-root']
             );
-            im = fmtDecimal(num.im);
+            im = fmtDecimal(options,num.im);
             if(options['complex-root-position'] === 'before-number')
                 im = cr+im;
             else
@@ -164,7 +211,7 @@ define([],function(){
         else error('neither re nor im given'); // should never happen
 
         if(num.exp){
-            var exp = fmtDecimal(num.exp);
+            var exp = fmtDecimal(options,num.exp);
             var oem = options['output-exponent-marker'];
             if(oem)
                 ret += ' ' + oem + ' ' + exp;
@@ -178,5 +225,29 @@ define([],function(){
         return ret;
     };
 
-    return {postproc:postproc, fmtDecimal:fmtDecimal, fmtComplExp:fmtComplExp};
+
+    function processAll(options,nums){
+        return nums.map(function(quot){
+            var formatted = [quot.num, quot.denom].map(function(num){
+                if(!num) return num;
+                var numcopy = {};
+                for(var k in num) if(num.hasOwnProperty(k)) numcopy[k] = num;
+                postprocComplExp(options,num);
+                return fmtComplExp(options,num);
+            });
+            return {
+                num: formatted[0],
+                denom: formatted[1]
+            };
+        });
+    }
+
+    return {
+        postprocDecimal:postprocDecimal,
+        postprocComplExp:postprocComplExp,
+        postprocAll:postprocAll,
+        fmtDecimal:fmtDecimal,
+        fmtComplExp:fmtComplExp,
+        processAll:processAll
+    };
 });
