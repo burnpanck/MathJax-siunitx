@@ -82,7 +82,9 @@ define(
       if (preunits) {
         preunits = SIUnitParser(preunits, options, this.stack.env);
       }
-      num = SINumberListParser(num, options, this.stack.env).parsed;
+      var preformatted = SINumberListParser(num, options).map(function(num) {
+        return num.join(options['output-product'])
+      });
       units = SIUnitParser(units, options, this.stack.env);
       function medspace() {
         return MML.mspace().With({
@@ -91,22 +93,26 @@ define(
           scriptlevel: 0
         });
       };
-      for (var idx = 0; idx < num.length; ++idx) {
-        var n = num[idx];
-        if (idx & 1) {
-          // this is a separator
-          this.Push(TEX.Parse(n).mml());
-        } else {
-          // this is a number
-          if (preunits) {
-            this.Push(preunits.mml());
-            this.Push(medspace());
-          }
-          this.Push(TEX.Parse(n).mml());
-          this.Push(medspace());
-          this.Push(units.mml());
+      var that=this;
+      preformatted.forEach(function(num,i){
+        if(i){
+          if(preformatted.length>2){
+            if(i<preformatted.length-1)
+              that.Push(TEX.Parse(('\\text{'+options['list-separator']+'}')).mml());
+            else
+              that.Push(TEX.Parse(('\\text{'+options['list-final-separator']+'}')).mml());
+          } else {
+            that.Push(TEX.Parse(('\\text{'+options['list-pair-separator']+'}')).mml());
+          };
+        };
+        if (preunits) {
+          that.Push(preunits.mml());
+          that.Push(medspace());
         }
-      }
+        that.Push(TEX.Parse(num).mml());
+        that.Push(medspace());
+        that.Push(units.mml());
+      });
     },
 
     SIrange: function (name) {
@@ -118,7 +124,7 @@ define(
 
       units = SIUnitParser(units, options, this.stack.env);
       if (preunits)
-        preunits = SIUnitParser(preunits, options, this.stack.env)
+        preunits = SIUnitParser(preunits, options, this.stack.env);
 
       if (preunits) {
         this.Push(preunits.mml());
@@ -128,14 +134,14 @@ define(
           scriptlevel: 0
         }));
       }
-      this.Push(SINumberParser(num1, options, this.stack.env).mml());
+      this.Push(TEX.Parse(SINumberParser(num1, options).join(options['output-product'])).mml());
       this.Push(MML.mspace().With({
         width: MML.LENGTH.MEDIUMMATHSPACE,
         mathsize: MML.SIZE.NORMAL,
         scriptlevel: 0
       }));
       this.Push(units.mml());
-      this.Push(options['range-phrase']);
+      this.Push(TEX.Parse('\\text{'+options['range-phrase']+'}').mml());
       if (preunits) {
         this.Push(preunits.mml());
         this.Push(MML.mspace().With({
@@ -144,7 +150,7 @@ define(
           scriptlevel: 0
         }));
       }
-      this.Push(SINumberParser(num2, options, this.stack.env).mml());
+      this.Push(TEX.Parse(SINumberParser(num2, options).join(options['output-product'])).mml());
       this.Push(MML.mspace().With({
         width: MML.LENGTH.MEDIUMMATHSPACE,
         mathsize: MML.SIZE.NORMAL,
