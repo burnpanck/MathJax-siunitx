@@ -1,14 +1,14 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>MathJax TeX Test Page</title>
+<title>Interactive MathJax test</title>
 <!-- Copyright (c) 2010-2014 The MathJax Consortium -->
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
 <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <script type="text/x-mathjax-config">
   MathJax.Hub.Config({
     tex2jax: {inlineMath: [["$","$"],["\\(","\\)"]]},
-  	errorSettings: {message: undefined},
+//  	errorSettings: {message: undefined},
     TeX: { extensions: [
       "[Contrib]/siunitx/siunitx.js",
       "color.js"
@@ -38,7 +38,7 @@ function process(name){
     console.log('process ',name,src);
     document.getElementById("pre-"+name).innerHTML = src;
     document.getElementById("out-"+name).innerHTML = src;
-    xml_http_post("interactive-test.html", src, newSVG, name);
+    xml_http_post("compile-latex", src, newSVG, name);
     MathJax.Hub.Queue(["Typeset",MathJax.Hub,"out-"+name]);
 }
 function newSVG(req, name) {

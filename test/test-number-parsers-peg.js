@@ -60,9 +60,12 @@ describe('number-parser-peg',function(){
   beforeEach(function(){});
   describe('single-numbers',function(){
     test_single_number('basic','+-1.23',{re:{int:'1',sep:'.',frac:'23',sign:'\\pm'}});
-    test_single_number('exponent','1e2',{re:{int:'1'},exp:{int:2}});
+    test_single_number('basic','12345,67890',{re:{int:'12345',sep:',',frac:'67890'}});
+    test_single_number('exponent','1e2',{re:{int:'1'},exp:{int:'2'}});
+    test_single_number('exponent without mantissa','-e10',{sign:'-',exp:{int:'10'}});
     test_single_number('uncert in brackets','1.1(2)',{re:{int:'1',sep:'.',frac:'1',uncert:'2'}});
     test_single_number('complex','+ 1 - 2i',{re:{int:'1',sign:'+'},im:{int:'2',sign:'-',root:'i'}});
+    test_single_number('complex with +- imaginary part','1 +- 2i',{re:{int:'1'},im:{int:'2',sign:'\\pm',root:'i'}});
     test_single_number('complex with exponent','1 - j2 e2',{re:{int:'1'},im:{int:'2',sign:'-',root:'j'},exp:{int:'2'}});
     test_single_number('separate uncert','- 1,1 +- 2.01',{re:{int:'1',sep:',',frac:'10',sign:'-',uncert:'201'}});
     test_single_number('separate uncert','- 1.101 +- 2',{re:{int:'1',sep:'.',frac:'101',sign:'-',uncert:'2000'}});

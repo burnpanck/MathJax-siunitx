@@ -21,79 +21,46 @@
  *  limitations under the License.
  */
 
-define(['./siunitx-options-definition','./number-parser-peg','./number-formatter'],function(SIunitxOptions,PARSER,FORMATTER) {
+define(['./siunitx-options-definition','./number-parser-peg','./number-preformatter'],function(SIunitxOptions, PARSER, FORMATTER) {
     'use strict';
 
     var exports = {};
 
     var TEX = MathJax.InputJax.TeX;
 
+    var replacements = {
+        '+-': '\\pm',
+        '-+': '\\mp',
+        '<=': '\\leq',
+        '>=': '\\geq',
+        '<<': '\\ll',
+        '>>': '\\gg',
+    };
 
-    var SINumberParser = exports.SINumberParser = MathJax.Object.Subclass({
-        Init: function (string, options) {
-            this.string = string;
-            this.i = 0;
-            if (options === undefined)
-                options = SIunitxOptions();
-            else if (!(options instanceof SIunitxOptions)) {
-                console.log(options,SIunitxOptions);
-                throw "SINumberParser expects an options object";
-            }
-            this.options = options;
-
-            this.Parse();
-        },
-        Parse: function () {
-            var str = this.string.replace(/\s+/gi, '');
-            var replacements = {
-                '+-': '\\pm',
-                '-+': '\\mp',
-                '<=': '\\leq',
-                '>=': '\\geq',
-                '<<': '\\ll',
-                '>>': '\\gg',
-            };
-            for (var key in replacements) {
-                str = str.replace(key, replacements[key]);
-            }
-            this.parsed = PARSER.parse(str, this.options);
-            this.preformatted = FORMATTER.processAll(this.options, this.parsed);
-        },
-        mml: function () {
-            return this.preformatted.map(function(prod){
-                var ret = [prod.num,prod.denom].map(function(num){
-                    if(!num) return num;
-                    return TEX.Parse(num).mml();
-                });
-                return {num:ret[0],denom:ret[1]};
-            });
+    function preprocess(str){
+        str = str.replace(/\s+/gi, '');
+        for (var key in replacements) if(replacements.hasOwnProperty(key)) {
+            str = str.replace(key, replacements[key]);
         }
-    });
+        return str;
+    }
 
-    var SINumberListParser = exports.SINumberListParser = SINumberParser.Subclass({
-        Parse: function () {
-            // TODO: do not process list separators via TeX parsing
-            var str = this.string.replace(/\s+/gi, '');
-            var numbers = str.split(';');
-            var parsed = [];
-            for (var idx = 0; idx < numbers.length; ++idx) {
-                if (idx == numbers.length - 1) {
-                    if (idx == 1) {
-                        parsed.push('\\text{' + this.options['list-pair-separator'] + '}');
-                    } else if (idx) {
-                        parsed.push('\\text{' + this.options['list-final-separator'] + '}');
-                    }
-                } else if (idx) {
-                    parsed.push('\\text{' + this.options['list-separator'] + '}');
-                }
-                parsed.push(this._parse_multi_part_number(numbers[idx]));
-            }
-            this.parsed = parsed;
-        },
-        mml: function () {
-            return TEX.Parse(this.parsed.join('')).mml();
-        }
-    });
+    exports.SINumberParser = function SINumberParser(string,options){
+        var str = preprocess(string);
+        var parsed = PARSER.parse(str, options);
+        var preformatted = FORMATTER.processAll(options, parsed);
+        return preformatted;
+    };
+
+    exports.SINumberListParser = function SINumberListParser(string,options){
+        var ret = string.split(';').map(function(str) {
+            var str = preprocess(str);
+            var parsed = PARSER.parse(str, options);
+            var preformatted = FORMATTER.processAll(options, parsed);
+            return preformatted;
+        });
+        return ret;
+    };
 
     return exports;
 });

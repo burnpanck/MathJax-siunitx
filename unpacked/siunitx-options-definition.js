@@ -144,7 +144,7 @@ define(['./keyvalue-option-validation'],function(KEYVAL) {
     'list-final-separator': Literal(' and '),   // done
     'list-pair-separator': Literal(' and '),    // done
     'list-separator': Literal(', '),            // done
-    'range-phrase': TeXParsedLiteral(' to '),   // done
+    'range-phrase': Literal(' to '),   // done
 
     // angle options
     'add-arc-degree-zero': Switch(false),

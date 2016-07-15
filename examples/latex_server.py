@@ -13,8 +13,10 @@ from wsgiref.simple_server import make_server
 
 #import bs4
 
-FILE = 'interactive-test.html'
+basepath = os.path.join(os.path.realpath('../..'),'')
+FILE = os.path.relpath('interactive-test.html',basepath)
 PORT = 8080
+print(basepath,FILE)
 
 template = r"""\documentclass[varwidth]{standalone}
 
@@ -63,8 +65,18 @@ def compile_snippet(base,snip,fn=None,force=False):
     ])        
     return fn
 
+suffix2type = dict(
+    html = 'text/html',
+    js = 'application/javascript',
+)
+
+
 def test_app(environ, start_response):
+    path = environ['PATH_INFO']
     if environ['REQUEST_METHOD'] == 'POST':
+        if False and not path=='compile-latex':
+            start_response('403 Forbidden',[])
+            return []
         try:
             request_body_size = int(environ['CONTENT_LENGTH'])
             request_body = environ['wsgi.input'].read(request_body_size)
@@ -84,10 +96,17 @@ def test_app(environ, start_response):
         start_response(status, headers)
         return [response_body]
     else:
-        with open(FILE,'rb') as fh:
+        path = os.path.realpath(os.path.join(basepath,path.lstrip('/')))
+        if os.path.commonprefix([path,basepath]) != basepath:
+            start_response('403 Forbidden',[])
+            return []
+        if not os.path.exists(path):
+            start_response('404 Not Found',[])
+            return []
+        with open(path,'rb') as fh:
             response_body = fh.read()
         status = '200 OK'
-        headers = [('Content-type', 'text/html'),
+        headers = [('Content-type', suffix2type[path.split('.')[-1]]),
                    ('Content-Length', str(len(response_body)))]
         start_response(status, headers)
         return [response_body]

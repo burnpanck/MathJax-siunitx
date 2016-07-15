@@ -1,6 +1,26 @@
-/**
- * Created by yves on 27.06.16.
+/*************************************************************
+ *
+ *  MathJax/extensions/TeX/siunitx/number-preformatter.js
+ *
+ *  Converts parsed numbers back into LaTeX, after performing post-processing.
+ *
+ *  ---------------------------------------------------------------------
+ *
+ *  Copyright (c) 2016 Yves Delley, https://github.com/burnpanck
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  */
+
 
 define([],function(){
     'use strict';
@@ -46,7 +66,7 @@ define([],function(){
     }
     function postprocDecimal(options,num,no_rounding,retain_plus){
         console.log(num);
-        if(num===null)return;
+        if(!num)return;
         var n;
         // -- explicit signs
         if(num.sign === null)
@@ -204,11 +224,15 @@ define([],function(){
                 im = im+cr;
         }
         var ret = num.rel ? num.rel+' ' : '';
-        if(re !== null) {
-            if(im === null) ret += re;
+        if(re) {
+            if(!im) ret += re;
             else ret += ob + re + ' ' + im + cb;
-        } else if(im !== null) ret += im;
-        else error('neither re nor im given'); // should never happen
+        } else if(im) ret += im;
+        if(num.sign){
+            // num.sign only for lone signs without any number
+            if(num.re || num.im) error('sign but also re or im given');  // should never happen
+            ret += ' ' + num.sign;
+        }
 
         if(num.exp){
             var exp = fmtDecimal(options,num.exp);
@@ -217,8 +241,11 @@ define([],function(){
                 ret += ' ' + oem + ' ' + exp;
             else
                 ret += (
-                    ' ' + (options['exponent-product'] || '\\times')
-                    + ' ' + (options['exponent-base'] || '10')
+                    ' ' + (
+                        (re || im) ?
+                        (options['exponent-product'] || '\\times') :
+                        ''
+                    ) + ' ' + (options['exponent-base'] || '10')
                     + '^{' + exp + '}'
                 );
         }
@@ -235,10 +262,11 @@ define([],function(){
                 postprocComplExp(options,num);
                 return fmtComplExp(options,num);
             });
-            return {
-                num: formatted[0],
-                denom: formatted[1]
-            };
+            var num = formatted[0];
+            var denom = formatted[1];
+            if(denom === null) return num;
+            if(options['quotient-mode']=='symbol') return num + options['output-quotient'] + denom;
+            return options['fraction-function']+'{'+num+'}{'+denom+'}';
         });
     }
 

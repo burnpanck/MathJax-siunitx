@@ -40,13 +40,22 @@ Factor = 'x' _ num:MaybeQuotient {return num;}
 MaybeQuotient = num:FullNum denom:(_ '/' _ FullNum)? {
 	return {num:num, denom:denom && denom[3]};
 }
-FullNum = rel:(Rel _)? mantissa:ComplexOrRealWUncert exp:(_ Exponent)? {
+FullNum = OnlyExponent / FullNumWMantissa
+FullNumWMantissa = rel:(Rel _)? mantissa:ComplexOrRealWUncert exp:(_ Exponent)? {
 	mantissa.exp = exp && exp[1];
     mantissa.rel = rel && rel[0];
 	return mantissa;
 }
-ComplexOrRealWUncert = RealWUncert / ComplexNum // / RealWUncert // TODO: this does not seem to work (tries to match ComplexNum even with '1 +- 1')
-ComplexNum = re:((DblSign _)? DecimalWUncert) im:(_ DblSign _ ImaginaryNum)? {
+OnlyExponent = rel:(Rel _)? sign:(DblSign _)? exp:Exponent {
+    var ret = {
+        sign: sign && sign[0],
+        exp: exp,
+        rel: rel && rel[0]
+    };
+    return ret;
+}
+ComplexOrRealWUncert = ComplexNum /  RealWUncertPM / RealWUncertBracket
+ComplexNum = re:((DblSign _)? DecimalWUncert) im:(_ DblSign _ ImaginaryNum) {
 	var res = re[0] && re[0][0];
     re = re[1];
     re.sign = res;
@@ -58,7 +67,11 @@ ComplexNum = re:((DblSign _)? DecimalWUncert) im:(_ DblSign _ ImaginaryNum)? {
         im: im,
     }
 }
-RealWUncert = sign:(DblSign _)? num:Decimal _ PM _ uncert:Decimal {
+RealWUncertBracket = sign:(DblSign _)? num:DecimalWUncert {
+    num.sign = sign && sign[0];
+    return {re:num};
+}
+RealWUncertPM = sign:(DblSign _)? num:Decimal _ PM _ uncert:Decimal {
 	var n = num.frac.length;
     var m = uncert.frac.length;
     num.frac = num.frac + repeat('0',Math.max(0,m-n));

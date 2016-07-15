@@ -51,22 +51,27 @@ define(
       var num = this.GetArgument(name);
       var preunits = this.GetBrackets(name, '');
       var units = this.GetArgument(name);
+      var factors = SINumberParser(num, options);
 //     console.log('>> SI(',name,'){',num,'}{',units,'}');
-      if (preunits) {
-        this.Push(SIUnitParser(preunits, options, this.stack.env).mml());
-        this.Push(MML.mspace().With({
+      var that = this;
+      factors.forEach(function(num,i) {
+        if(i) that.Push(TEX.Parse(options['output-product']).mml());
+        if (preunits) {
+          that.Push(SIUnitParser(preunits, options, that.stack.env).mml());
+          that.Push(MML.mspace().With({
+            width: MML.LENGTH.MEDIUMMATHSPACE,
+            mathsize: MML.SIZE.NORMAL,
+            scriptlevel: 0
+          }));
+        }
+        that.Push(TEX.Parse(num).mml());
+        that.Push(MML.mspace().With({
           width: MML.LENGTH.MEDIUMMATHSPACE,
           mathsize: MML.SIZE.NORMAL,
           scriptlevel: 0
         }));
-      }
-      this.Push(SINumberParser(num, options, this.stack.env).mml()[0].num);
-      this.Push(MML.mspace().With({
-        width: MML.LENGTH.MEDIUMMATHSPACE,
-        mathsize: MML.SIZE.NORMAL,
-        scriptlevel: 0
-      }));
-      this.Push(SIUnitParser(units, options, this.stack.env).mml());
+        that.Push(SIUnitParser(units, options, that.stack.env).mml());
+      });
     },
 
     SIlist: function (name) {
@@ -151,7 +156,8 @@ define(
     num: function (name) {
       var options = SIunitxOptions.ParseOptions(this.GetBrackets(name, ''));
       var num = this.GetArgument(name);
-      this.Push(SINumberParser(num, options, this.stack.env).mml());
+      var preformatted = SINumberParser(num, options).join(options['output-product']);
+      this.Push(TEX.Parse(preformatted).mml());
     },
 
     ang: function (name) {
@@ -188,16 +194,30 @@ define(
     numlist: function (name) {
       var options = SIunitxOptions.ParseOptions(this.GetBrackets(name, ''));
       var num = this.GetArgument(name);
-      this.Push(SINumberListParser(num, options, this.stack.env).mml());
+      var preformatted = SINumberListParser(num, options).map(function(num) {
+        return num.join(options['output-product'])
+      });
+
+      var joined;
+      if(preformatted.length>2) {
+        joined = preformatted.slice(0, -1).join('\\text{'+options['list-separator']+'}');
+        joined += '\\text{'+options['list-final-separator']+'}'+preformatted[preformatted.length-1];
+      } else {
+        joined = preformatted.join('\\text{'+options['list-pair-separator']+'}');
+      }
+      this.Push(TEX.Parse(joined).mml());
     },
 
     numrange: function (name) {
       var options = SIunitxOptions.ParseOptions(this.GetBrackets(name, ''));
       var num1 = this.GetArgument(name);
       var num2 = this.GetArgument(name);
-      this.Push(SINumberParser(num1, options, this.stack.env).mml());
-      this.Push(options['range-phrase']);
-      this.Push(SINumberParser(num2, options, this.stack.env).mml());
+      var preformatted = (
+          SINumberParser(num1, options).join(options['output-product'])
+          + '\\text{'+options['range-phrase']+'}'
+          + SINumberParser(num2, options).join(options['output-product'])
+      );
+      this.Push(TEX.Parse(preformatted).mml());
     }
 
   };
