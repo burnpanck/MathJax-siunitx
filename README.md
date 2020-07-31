@@ -19,7 +19,7 @@ When using it in a production environment, please host it locally.
 To try it out, you may use rawgit.
 Then, add the extension to your configuration like any other third party extension. For example, your inline configuration might be
 
-     <script type="text/x-mathjax-config>
+     <script type="text/x-mathjax-config">
      MathJax.Hub.Config({
        extensions: ["tex2jax.js","[siunitx]/siunitx.js"],
        jax: ["input/TeX","output/HTML-CSS"],
