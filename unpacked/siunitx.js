@@ -391,7 +391,7 @@ siunitx_options_definition = function (KEYVAL) {
     'output-close-uncertainty': Literal(')'),
     'output-complex-root': Literal('\\mathrm{i}'),
     // done
-    'output-decimal-marker': Literal('.'),
+    'output-decimal-marker': Choice('.', ','),
     // done
     'output-exponent-marker': Literal(''),
     'output-open-uncertainty': Literal('('),
