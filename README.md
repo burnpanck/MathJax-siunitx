@@ -1,3 +1,5 @@
+**WARNING: This repository is unmaintained, and not up to date with recent MathJax or SIUnitX. If someone wants to step up to update and maintain this extension, I'd be happy to hand it over.**
+
 # Extension: siunitx for the MathJax third party repository
 
 An implementation of the [siunitx package for LaTeX](http://www.ctan.org/pkg/siunitx) for [MathJax](https://github.com/mathjax/MathJax).
