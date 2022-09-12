@@ -125,7 +125,7 @@ define(['./keyvalue-option-validation'],function(KEYVAL) {
     'open-bracket': Literal('('),
     'output-close-uncertainty': Literal(')'),
     'output-complex-root': Literal('\\mathrm{i}'),	// done
-    'output-decimal-marker': Literal('.'),        // done
+    'output-decimal-marker': Choice('.', ','),        // done
     'output-exponent-marker': Literal(''),
     'output-open-uncertainty': Literal('('),
     'separate-uncertainty': Switch(false),
