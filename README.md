@@ -1,10 +1,13 @@
-**WARNING: This repository is unmaintained, and not up to date with recent MathJax or SIUnitX. If someone wants to step up to update and maintain this extension, I'd be happy to hand it over.**
+# WARNING: Unmaintained and outdated, since many years!
+**For a newer implementation that is compatible with MathJax 3+, refer to [siunitx-pcc](https://github.com/limefrogyank/siunitx-pcc).**
+
+---
 
 # Extension: siunitx for the MathJax third party repository
 
 An implementation of the [siunitx package for LaTeX](http://www.ctan.org/pkg/siunitx) for [MathJax](https://github.com/mathjax/MathJax).
 
-## #About siunitx
+## About siunitx
 
 The siunitx package allows to typeset physical quantities consistently using the syntax `\SI{299e6}{\metre\per\second}`. This extension provides the same syntax in MathJax. Please see the [documentation for siunitx on CTAN](http://www.ctan.org/pkg/siunitx) for details about siunitx.
 
